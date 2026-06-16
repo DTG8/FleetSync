@@ -1,0 +1,20 @@
+# Python caches and compilation artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Local databases
+backend/fleet.db
+*.db
+*.sqlite3
+
+# Node dependencies & environment files
+node_modules/
+.env
+.env.local
+
+# IDE configurations
+.vscode/
+.idea/
