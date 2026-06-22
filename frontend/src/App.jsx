@@ -47,7 +47,7 @@ ChartJS.register(
 
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://127.0.0.1:8000'
-  : `http://${window.location.hostname}:8050`; // Connected to port 8050 on the server as defined in PM2 config
+  : '/api/v1'; // Goes through nginx reverse proxy on the server
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
