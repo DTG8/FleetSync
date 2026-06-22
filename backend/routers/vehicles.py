@@ -28,3 +28,7 @@ def read_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
 @router.put("/{vehicle_id}", response_model=schemas.VehicleResponse)
 def update_vehicle(vehicle_id: int, vehicle_update: schemas.VehicleUpdate, db: Session = Depends(get_db)):
     return crud.update_vehicle(db=db, vehicle_id=vehicle_id, vehicle_update=vehicle_update)
+
+@router.delete("/{vehicle_id}", response_model=schemas.VehicleResponse)
+def delete_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
+    return crud.delete_vehicle(db=db, vehicle_id=vehicle_id)

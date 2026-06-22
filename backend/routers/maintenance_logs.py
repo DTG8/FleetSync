@@ -17,3 +17,11 @@ def read_maintenance_logs(skip: int = 0, limit: int = 100, db: Session = Depends
 @router.post("", response_model=schemas.MaintenanceLogResponse, status_code=status.HTTP_201_CREATED)
 def create_maintenance_log(log: schemas.MaintenanceLogCreate, db: Session = Depends(get_db)):
     return crud.create_maintenance_log(db=db, log=log)
+
+@router.put("/{log_id}", response_model=schemas.MaintenanceLogResponse)
+def update_maintenance_log(log_id: int, log_update: schemas.MaintenanceLogUpdate, db: Session = Depends(get_db)):
+    return crud.update_maintenance_log(db=db, log_id=log_id, log_update=log_update)
+
+@router.delete("/{log_id}", response_model=schemas.MaintenanceLogResponse)
+def delete_maintenance_log(log_id: int, db: Session = Depends(get_db)):
+    return crud.delete_maintenance_log(db=db, log_id=log_id)

@@ -24,3 +24,11 @@ def read_driver(driver_id: int, db: Session = Depends(get_db)):
     if not db_driver:
         raise HTTPException(status_code=404, detail="Driver not found")
     return db_driver
+
+@router.put("/{driver_id}", response_model=schemas.DriverResponse)
+def update_driver(driver_id: int, driver_update: schemas.DriverUpdate, db: Session = Depends(get_db)):
+    return crud.update_driver(db=db, driver_id=driver_id, driver_update=driver_update)
+
+@router.delete("/{driver_id}", response_model=schemas.DriverResponse)
+def delete_driver(driver_id: int, db: Session = Depends(get_db)):
+    return crud.delete_driver(db=db, driver_id=driver_id)

@@ -52,6 +52,14 @@ def update_vehicle(db: Session, vehicle_id: int, vehicle_update: schemas.Vehicle
     db.refresh(db_vehicle)
     return db_vehicle
 
+def delete_vehicle(db: Session, vehicle_id: int):
+    db_vehicle = get_vehicle(db, vehicle_id)
+    if not db_vehicle:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+    db.delete(db_vehicle)
+    db.commit()
+    return db_vehicle
+
 
 # --- DRIVER CRUD ---
 def get_driver(db: Session, driver_id: int):
@@ -79,6 +87,25 @@ def create_driver(db: Session, driver: schemas.DriverCreate):
     db.add(db_driver)
     db.commit()
     db.refresh(db_driver)
+    return db_driver
+
+def update_driver(db: Session, driver_id: int, driver_update: schemas.DriverUpdate):
+    db_driver = get_driver(db, driver_id)
+    if not db_driver:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
+    update_data = driver_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_driver, key, value)
+    db.commit()
+    db.refresh(db_driver)
+    return db_driver
+
+def delete_driver(db: Session, driver_id: int):
+    db_driver = get_driver(db, driver_id)
+    if not db_driver:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
+    db.delete(db_driver)
+    db.commit()
     return db_driver
 
 
@@ -169,6 +196,21 @@ def return_allocation(db: Session, allocation_id: int):
     db_alloc.driver_name = driver.full_name if driver else None
     return db_alloc
 
+def delete_allocation(db: Session, allocation_id: int):
+    db_alloc = db.query(models.Allocation).filter(models.Allocation.id == allocation_id).first()
+    if not db_alloc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Allocation not found")
+    
+    # Revert driver status if active
+    if db_alloc.returned_at is None:
+        driver = db.query(models.Driver).filter(models.Driver.id == db_alloc.driver_id).first()
+        if driver:
+            driver.status = "Available"
+
+    db.delete(db_alloc)
+    db.commit()
+    return db_alloc
+
 
 # --- FUEL LOG CRUD ---
 def get_fuel_logs(db: Session, skip: int = 0, limit: int = 100):
@@ -209,6 +251,26 @@ def create_fuel_log(db: Session, fuel_log: schemas.FuelLogCreate):
     db.commit()
     db.refresh(db_fuel_log)
     return db_fuel_log
+
+def update_fuel_log(db: Session, fuel_log_id: int, log_update: schemas.FuelLogUpdate):
+    db_log = db.query(models.FuelLog).filter(models.FuelLog.id == fuel_log_id).first()
+    if not db_log:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fuel log not found")
+    
+    update_data = log_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_log, key, value)
+    db.commit()
+    db.refresh(db_log)
+    return db_log
+
+def delete_fuel_log(db: Session, fuel_log_id: int):
+    db_log = db.query(models.FuelLog).filter(models.FuelLog.id == fuel_log_id).first()
+    if not db_log:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fuel log not found")
+    db.delete(db_log)
+    db.commit()
+    return db_log
 
 
 # --- MAINTENANCE LOG CRUD ---
@@ -255,6 +317,26 @@ def create_maintenance_log(db: Session, log: schemas.MaintenanceLogCreate):
     db.refresh(db_log)
     return db_log
 
+def update_maintenance_log(db: Session, log_id: int, log_update: schemas.MaintenanceLogUpdate):
+    db_log = db.query(models.MaintenanceLog).filter(models.MaintenanceLog.id == log_id).first()
+    if not db_log:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Maintenance log not found")
+    
+    update_data = log_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_log, key, value)
+    db.commit()
+    db.refresh(db_log)
+    return db_log
+
+def delete_maintenance_log(db: Session, log_id: int):
+    db_log = db.query(models.MaintenanceLog).filter(models.MaintenanceLog.id == log_id).first()
+    if not db_log:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Maintenance log not found")
+    db.delete(db_log)
+    db.commit()
+    return db_log
+
 
 # --- VEHICLE PAPER CRUD ---
 def get_vehicle_papers(db: Session, skip: int = 0, limit: int = 100):
@@ -274,6 +356,25 @@ def create_vehicle_paper(db: Session, paper: schemas.VehiclePaperCreate):
     db.add(db_paper)
     db.commit()
     db.refresh(db_paper)
+    return db_paper
+
+def update_vehicle_paper(db: Session, paper_id: int, paper_update: schemas.VehiclePaperUpdate):
+    db_paper = db.query(models.VehiclePaper).filter(models.VehiclePaper.id == paper_id).first()
+    if not db_paper:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle paper not found")
+    update_data = paper_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_paper, key, value)
+    db.commit()
+    db.refresh(db_paper)
+    return db_paper
+
+def delete_vehicle_paper(db: Session, paper_id: int):
+    db_paper = db.query(models.VehiclePaper).filter(models.VehiclePaper.id == paper_id).first()
+    if not db_paper:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle paper not found")
+    db.delete(db_paper)
+    db.commit()
     return db_paper
 
 
@@ -303,6 +404,26 @@ def create_miscellaneous_expense(db: Session, expense: schemas.MiscellaneousExpe
     db.add(db_expense)
     db.commit()
     db.refresh(db_expense)
+    return db_expense
+
+def update_miscellaneous_expense(db: Session, expense_id: int, expense_update: schemas.MiscellaneousExpenseUpdate):
+    db_expense = db.query(models.MiscellaneousExpense).filter(models.MiscellaneousExpense.id == expense_id).first()
+    if not db_expense:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
+    
+    update_data = expense_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_expense, key, value)
+    db.commit()
+    db.refresh(db_expense)
+    return db_expense
+
+def delete_miscellaneous_expense(db: Session, expense_id: int):
+    db_expense = db.query(models.MiscellaneousExpense).filter(models.MiscellaneousExpense.id == expense_id).first()
+    if not db_expense:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
+    db.delete(db_expense)
+    db.commit()
     return db_expense
 
 

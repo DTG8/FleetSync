@@ -17,3 +17,11 @@ def read_fuel_logs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
 @router.post("", response_model=schemas.FuelLogResponse, status_code=status.HTTP_201_CREATED)
 def create_fuel_log(fuel_log: schemas.FuelLogCreate, db: Session = Depends(get_db)):
     return crud.create_fuel_log(db=db, fuel_log=fuel_log)
+
+@router.put("/{fuel_log_id}", response_model=schemas.FuelLogResponse)
+def update_fuel_log(fuel_log_id: int, log_update: schemas.FuelLogUpdate, db: Session = Depends(get_db)):
+    return crud.update_fuel_log(db=db, fuel_log_id=fuel_log_id, log_update=log_update)
+
+@router.delete("/{fuel_log_id}", response_model=schemas.FuelLogResponse)
+def delete_fuel_log(fuel_log_id: int, db: Session = Depends(get_db)):
+    return crud.delete_fuel_log(db=db, fuel_log_id=fuel_log_id)

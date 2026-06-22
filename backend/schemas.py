@@ -13,6 +13,11 @@ class VehiclePaperBase(BaseModel):
 class VehiclePaperCreate(VehiclePaperBase):
     pass
 
+class VehiclePaperUpdate(BaseModel):
+    document_type: Optional[str] = None
+    expiry_date: Optional[date] = None
+    last_reminder_sent: Optional[datetime] = None
+
 class VehiclePaperResponse(VehiclePaperBase):
     id: int
 
@@ -62,6 +67,12 @@ class DriverBase(BaseModel):
 class DriverCreate(DriverBase):
     pass
 
+class DriverUpdate(BaseModel):
+    full_name: Optional[str] = None
+    license_number: Optional[str] = None
+    phone_number: Optional[str] = None
+    status: Optional[str] = None
+
 class DriverResponse(DriverBase):
     id: int
 
@@ -102,6 +113,15 @@ class FuelLogBase(BaseModel):
 class FuelLogCreate(FuelLogBase):
     pass
 
+class FuelLogUpdate(BaseModel):
+    driver_id: Optional[int] = None
+    entry_date: Optional[date] = None
+    odometer_reading: Optional[int] = None
+    fuel_added_liters: Optional[Decimal] = Field(None, gt=0)
+    cost: Optional[Decimal] = Field(None, ge=0)
+    fuel_gauge_after_fill_percent: Optional[int] = Field(None, ge=0, le=100)
+    filling_station: Optional[str] = None
+
 class FuelLogResponse(FuelLogBase):
     id: int
 
@@ -123,6 +143,15 @@ class MaintenanceLogBase(BaseModel):
 class MaintenanceLogCreate(MaintenanceLogBase):
     pass
 
+class MaintenanceLogUpdate(BaseModel):
+    driver_id: Optional[int] = None
+    issue_description: Optional[str] = None
+    type: Optional[str] = None
+    status: Optional[str] = None
+    cost: Optional[Decimal] = Field(None, ge=0)
+    logged_at: Optional[date] = None
+    resolved_at: Optional[date] = None
+
 class MaintenanceLogResponse(MaintenanceLogBase):
     id: int
 
@@ -141,6 +170,13 @@ class MiscellaneousExpenseBase(BaseModel):
 
 class MiscellaneousExpenseCreate(MiscellaneousExpenseBase):
     pass
+
+class MiscellaneousExpenseUpdate(BaseModel):
+    driver_id: Optional[int] = None
+    amount: Optional[Decimal] = Field(None, gt=0)
+    description: Optional[str] = None
+    entry_date: Optional[date] = None
+    category: Optional[str] = None
 
 class MiscellaneousExpenseResponse(MiscellaneousExpenseBase):
     id: int

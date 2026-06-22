@@ -21,3 +21,7 @@ def create_allocation(allocation: schemas.AllocationCreate, db: Session = Depend
 @router.post("/{allocation_id}/return", response_model=schemas.AllocationResponse)
 def return_allocation(allocation_id: int, db: Session = Depends(get_db)):
     return crud.return_allocation(db=db, allocation_id=allocation_id)
+
+@router.delete("/{allocation_id}", response_model=schemas.AllocationResponse)
+def delete_allocation(allocation_id: int, db: Session = Depends(get_db)):
+    return crud.delete_allocation(db=db, allocation_id=allocation_id)

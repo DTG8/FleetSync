@@ -45,3 +45,11 @@ def get_expiring_papers(db: Session = Depends(get_db)):
 @router.post("/papers", response_model=schemas.VehiclePaperResponse, status_code=status.HTTP_201_CREATED)
 def create_vehicle_paper(paper: schemas.VehiclePaperCreate, db: Session = Depends(get_db)):
     return crud.create_vehicle_paper(db=db, paper=paper)
+
+@router.put("/papers/{paper_id}", response_model=schemas.VehiclePaperResponse)
+def update_vehicle_paper(paper_id: int, paper_update: schemas.VehiclePaperUpdate, db: Session = Depends(get_db)):
+    return crud.update_vehicle_paper(db=db, paper_id=paper_id, paper_update=paper_update)
+
+@router.delete("/papers/{paper_id}", response_model=schemas.VehiclePaperResponse)
+def delete_vehicle_paper(paper_id: int, db: Session = Depends(get_db)):
+    return crud.delete_vehicle_paper(db=db, paper_id=paper_id)

@@ -78,7 +78,8 @@ function App() {
 
   // Modals & Forms State
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState(''); // 'vehicle', 'driver', 'allocation', 'fuel', 'maintenance', 'paper', 'misc'
+  const [modalType, setModalType] = useState('');
+  const [editId, setEditId] = useState(null); // 'vehicle', 'driver', 'allocation', 'fuel', 'maintenance', 'paper', 'misc'
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -157,6 +158,7 @@ function App() {
   };
 
   const handleOpenModal = (type) => {
+    setEditId(null);
     setModalType(type);
     clearMessages();
     setShowModal(true);
@@ -167,13 +169,109 @@ function App() {
     clearMessages();
   };
 
+
+  // CRUD Helpers
+  const handleDelete = async (resource, id) => {
+    if (!window.confirm(`Are you sure you want to delete this ${resource}?`)) return;
+    try {
+      await axios.delete(`${API_BASE}/${resource}s/${id}`);
+      loadAllData();
+    } catch (err) {
+      alert(err.response?.data?.detail || `Failed to delete ${resource}.`);
+    }
+  };
+
+  const handleEditVehicle = (v) => {
+    setVehicleForm({
+      plate_number: v.plate_number,
+      make: v.make,
+      model: v.model,
+      year: v.year,
+      status: v.status,
+      current_odometer: v.current_odometer,
+      current_fuel_level_percent: v.current_fuel_level_percent,
+      purchase_date: v.purchase_date
+    });
+    setEditId(v.id);
+    handleOpenModal('vehicle');
+  };
+
+  
+  const handleEditFuelLog = (log) => {
+    setFuelForm({
+      vehicle_id: log.vehicle_id,
+      driver_id: log.driver_id || '',
+      entry_date: log.entry_date,
+      odometer_reading: log.odometer_reading,
+      fuel_added_liters: log.fuel_added_liters,
+      cost: log.cost,
+      fuel_gauge_after_fill_percent: log.fuel_gauge_after_fill_percent,
+      filling_station: log.filling_station || ''
+    });
+    setEditId(log.id);
+    handleOpenModal('fuel');
+  };
+
+  const handleEditMaintenanceLog = (log) => {
+    setMaintenanceForm({
+      vehicle_id: log.vehicle_id,
+      driver_id: log.driver_id || '',
+      issue_description: log.issue_description,
+      type: log.type,
+      status: log.status,
+      cost: log.cost,
+      logged_at: log.logged_at,
+      resolved_at: log.resolved_at || ''
+    });
+    setEditId(log.id);
+    handleOpenModal('maintenance');
+  };
+
+  const handleEditPaper = (paper) => {
+    setPaperForm({
+      vehicle_id: paper.vehicle_id,
+      document_type: paper.document_type,
+      expiry_date: paper.expiry_date
+    });
+    setEditId(paper.id);
+    handleOpenModal('paper');
+  };
+
+  const handleEditMiscExpense = (exp) => {
+    setMiscForm({
+      vehicle_id: exp.vehicle_id,
+      driver_id: exp.driver_id || '',
+      amount: exp.amount,
+      description: exp.description,
+      entry_date: exp.entry_date,
+      category: exp.category
+    });
+    setEditId(exp.id);
+    handleOpenModal('misc');
+  };
+
+  const handleEditDriver = (d) => {
+    setDriverForm({
+      full_name: d.full_name,
+      license_number: d.license_number,
+      phone_number: d.phone_number,
+      status: d.status
+    });
+    setEditId(d.id);
+    handleOpenModal('driver');
+  };
+
   // API Call Handlers
   const handleCreateVehicle = async (e) => {
     e.preventDefault();
     clearMessages();
     try {
-      await axios.post(`${API_BASE}/vehicles`, vehicleForm);
-      setSuccessMsg('Vehicle added successfully!');
+      if (editId) {
+        await axios.put(`${API_BASE}/vehicles/${editId}`, vehicleForm);
+      } else {
+        await axios.post(`${API_BASE}/vehicles`, vehicleForm);
+      }
+      setSuccessMsg(editId ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
       setVehicleForm({ plate_number: '', make: '', model: '', year: new Date().getFullYear(), status: 'Active', current_odometer: 0, current_fuel_level_percent: 100, purchase_date: '' });
       loadAllData();
       setTimeout(handleCloseModal, 1500);
@@ -186,8 +284,12 @@ function App() {
     e.preventDefault();
     clearMessages();
     try {
-      await axios.post(`${API_BASE}/drivers`, driverForm);
-      setSuccessMsg('Driver added successfully!');
+      if (editId) {
+        await axios.put(`${API_BASE}/drivers/${editId}`, driverForm);
+      } else {
+        await axios.post(`${API_BASE}/drivers`, driverForm);
+      }
+      setSuccessMsg(editId ? 'Driver updated successfully!' : 'Driver added successfully!');
       setDriverForm({ full_name: '', license_number: '', phone_number: '', status: 'Available' });
       loadAllData();
       setTimeout(handleCloseModal, 1500);
@@ -216,8 +318,12 @@ function App() {
     try {
       const payload = { ...fuelForm };
       if (!payload.driver_id) delete payload.driver_id;
-      await axios.post(`${API_BASE}/fuel-logs`, payload);
-      setSuccessMsg('Fuel fill-up logged successfully!');
+      if (editId) {
+        await axios.put(`${API_BASE}/fuel-logs/${editId}`, payload);
+      } else {
+        await axios.post(`${API_BASE}/fuel-logs`, payload);
+      }
+      setSuccessMsg(editId ? 'Fuel fill-up updated successfully!' : 'Fuel fill-up logged successfully!');
       setFuelForm({ vehicle_id: '', driver_id: '', entry_date: new Date().toISOString().split('T')[0], odometer_reading: '', fuel_added_liters: '', cost: '', fuel_gauge_after_fill_percent: '', filling_station: '' });
       loadAllData();
       setTimeout(handleCloseModal, 1500);
@@ -233,8 +339,12 @@ function App() {
       const payload = { ...maintenanceForm };
       if (!payload.driver_id) delete payload.driver_id;
       if (!payload.resolved_at) delete payload.resolved_at;
-      await axios.post(`${API_BASE}/maintenance-logs`, payload);
-      setSuccessMsg('Maintenance logged successfully!');
+      if (editId) {
+        await axios.put(`${API_BASE}/maintenance-logs/${editId}`, payload);
+      } else {
+        await axios.post(`${API_BASE}/maintenance-logs`, payload);
+      }
+      setSuccessMsg(editId ? 'Maintenance updated successfully!' : 'Maintenance logged successfully!');
       setMaintenanceForm({ vehicle_id: '', driver_id: '', issue_description: '', type: 'Routine Service', status: 'Pending', cost: '', logged_at: new Date().toISOString().split('T')[0], resolved_at: '' });
       loadAllData();
       setTimeout(handleCloseModal, 1500);
@@ -247,8 +357,12 @@ function App() {
     e.preventDefault();
     clearMessages();
     try {
-      await axios.post(`${API_BASE}/compliance/papers`, paperForm);
-      setSuccessMsg('Vehicle paper added successfully!');
+      if (editId) {
+        await axios.put(`${API_BASE}/compliance/papers/${editId}`, paperForm);
+      } else {
+        await axios.post(`${API_BASE}/compliance/papers`, paperForm);
+      }
+      setSuccessMsg(editId ? 'Vehicle paper updated successfully!' : 'Vehicle paper added successfully!');
       setPaperForm({ vehicle_id: '', document_type: 'Insurance', expiry_date: '' });
       loadAllData();
       setTimeout(handleCloseModal, 1500);
@@ -263,8 +377,12 @@ function App() {
     try {
       const payload = { ...miscForm };
       if (!payload.driver_id) delete payload.driver_id;
-      await axios.post(`${API_BASE}/miscellaneous-expenses`, payload);
-      setSuccessMsg('Miscellaneous expense logged successfully!');
+      if (editId) {
+        await axios.put(`${API_BASE}/miscellaneous-expenses/${editId}`, payload);
+      } else {
+        await axios.post(`${API_BASE}/miscellaneous-expenses`, payload);
+      }
+      setSuccessMsg(editId ? 'Miscellaneous expense updated successfully!' : 'Miscellaneous expense logged successfully!');
       setMiscForm({ vehicle_id: '', driver_id: '', amount: '', description: '', entry_date: new Date().toISOString().split('T')[0], category: 'Toll' });
       loadAllData();
       setTimeout(handleCloseModal, 1500);
@@ -752,12 +870,13 @@ function App() {
                       <th className="py-3 px-4">Fuel level</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4">Purchase Date</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
                     {vehicles.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="py-8 text-center text-slate-500 text-xs">No vehicles registered. Click "New Vehicle" to create.</td>
+                        <td colSpan="8" className="py-8 text-center text-slate-500 text-xs">No vehicles registered. Click "New Vehicle" to create.</td>
                       </tr>
                     ) : (
                       vehicles.map((v) => (
@@ -789,6 +908,10 @@ function App() {
                             </span>
                           </td>
                           <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-xs">{v.purchase_date}</td>
+                          <td className="py-3.5 px-4 text-right space-x-3">
+                            <button onClick={() => handleEditVehicle(v)} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold text-xs">Edit</button>
+                            <button onClick={() => handleDelete('vehicle', v.id)} className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-semibold text-xs">Delete</button>
+                          </td>
                         </tr>
                       ))
                     )}
@@ -823,12 +946,13 @@ function App() {
                       <th className="py-3 px-4">License Number</th>
                       <th className="py-3 px-4">Phone Number</th>
                       <th className="py-3 px-4">Availability</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
                     {drivers.length === 0 ? (
                       <tr>
-                        <td colSpan="4" className="py-8 text-center text-slate-500 text-xs">No drivers registered. Click "New Driver" to create.</td>
+                        <td colSpan="5" className="py-8 text-center text-slate-500 text-xs">No drivers registered. Click "New Driver" to create.</td>
                       </tr>
                     ) : (
                       drivers.map((d) => (
@@ -844,6 +968,10 @@ function App() {
                             }`}>
                               {d.status}
                             </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right space-x-3">
+                            <button onClick={() => handleEditDriver(d)} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold text-xs">Edit</button>
+                            <button onClick={() => handleDelete('driver', d.id)} className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-semibold text-xs">Delete</button>
                           </td>
                         </tr>
                       ))
@@ -898,7 +1026,7 @@ function App() {
                     <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
                       {financialReport.vehicles.length === 0 ? (
                         <tr>
-                          <td colSpan="7" className="py-8 text-center text-slate-500 text-xs">No records found.</td>
+                          <td colSpan="8" className="py-8 text-center text-slate-500 text-xs">No records found.</td>
                         </tr>
                       ) : (
                         financialReport.vehicles.map((item) => (
@@ -946,12 +1074,13 @@ function App() {
                         <th className="py-3 px-4">Description</th>
                         <th className="py-3 px-4">Entry Date</th>
                         <th className="py-3 px-4 text-right">Amount</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
                       {miscExpenses.length === 0 ? (
                         <tr>
-                          <td colSpan="6" className="py-8 text-center text-slate-500 text-xs">No miscellaneous expenses logged.</td>
+                          <td colSpan="7" className="py-8 text-center text-slate-500 text-xs">No miscellaneous expenses logged.</td>
                         </tr>
                       ) : (
                         miscExpenses.map((exp) => {
@@ -973,6 +1102,10 @@ function App() {
                               <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 max-w-xs truncate">{exp.description}</td>
                               <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-xs">{exp.entry_date}</td>
                               <td className="py-3.5 px-4 text-right text-rose-500 font-bold">₦{exp.amount}</td>
+                              <td className="py-3.5 px-4 text-right space-x-3">
+                                <button onClick={() => handleEditMiscExpense(exp)} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold text-xs">Edit</button>
+                                <button onClick={() => handleDelete('miscellaneous-expense', exp.id)} className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-semibold text-xs">Delete</button>
+                              </td>
                             </tr>
                           );
                         })
@@ -999,7 +1132,7 @@ function App() {
                     className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-1"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Log Fuel Fill-Up</span>
+                    <span>{editId ? 'Update Fuel Log' : 'Log Fuel Fill-Up'}</span>
                   </button>
                 </div>
 
@@ -1015,12 +1148,13 @@ function App() {
                         <th className="py-3 px-4">Fuel Added</th>
                         <th className="py-3 px-4">Cost</th>
                         <th className="py-3 px-4">Gauge Post-Fill</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
                       {fuelLogs.length === 0 ? (
                         <tr>
-                          <td colSpan="8" className="py-8 text-center text-slate-500 text-xs">No fuel logs registered. Click "Log Fuel Fill-Up" to record.</td>
+                          <td colSpan="9" className="py-8 text-center text-slate-500 text-xs">No fuel logs registered. Click "{editId ? 'Update Fuel Log' : 'Log Fuel Fill-Up'}" to record.</td>
                         </tr>
                       ) : (
                         fuelLogs.map((log) => {
@@ -1036,6 +1170,10 @@ function App() {
                               <td className="py-3.5 px-4 text-slate-800 dark:text-slate-200 font-semibold">{log.fuel_added_liters} Liters</td>
                               <td className="py-3.5 px-4 text-rose-500 font-semibold">₦{log.cost}</td>
                               <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">{log.fuel_gauge_after_fill_percent}%</td>
+                              <td className="py-3.5 px-4 text-right space-x-3">
+                                <button onClick={() => handleEditFuelLog(log)} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold text-xs">Edit</button>
+                                <button onClick={() => handleDelete('fuel-log', log.id)} className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-semibold text-xs">Delete</button>
+                              </td>
                             </tr>
                           );
                         })
@@ -1064,7 +1202,7 @@ function App() {
                     <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
                       {fillingStationStats.length === 0 ? (
                         <tr>
-                          <td colSpan="4" className="py-8 text-center text-slate-500 text-xs">No expenditure records registered in this period.</td>
+                          <td colSpan="5" className="py-8 text-center text-slate-500 text-xs">No expenditure records registered in this period.</td>
                         </tr>
                       ) : (
                         fillingStationStats.map((item, idx) => (
@@ -1112,12 +1250,13 @@ function App() {
                       <th className="py-3 px-4">Logged At</th>
                       <th className="py-3 px-4">Resolved At</th>
                       <th className="py-3 px-4 text-right">Cost</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
                     {maintenanceLogs.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="py-8 text-center text-slate-500 text-xs">No maintenance records registered. Click "Log Maintenance" to add.</td>
+                        <td colSpan="9" className="py-8 text-center text-slate-500 text-xs">No maintenance records registered. Click "Log Maintenance" to add.</td>
                       </tr>
                     ) : (
                       maintenanceLogs.map((log) => {
@@ -1141,6 +1280,10 @@ function App() {
                             <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-xs">{log.logged_at}</td>
                             <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-xs">{log.resolved_at || '-'}</td>
                             <td className="py-3.5 px-4 text-right text-rose-500 font-semibold">₦{log.cost}</td>
+                            <td className="py-3.5 px-4 text-right space-x-3">
+                              <button onClick={() => handleEditMaintenanceLog(log)} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold text-xs">Edit</button>
+                              <button onClick={() => handleDelete('maintenance-log', log.id)} className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-semibold text-xs">Delete</button>
+                            </td>
                           </tr>
                         );
                       })
@@ -1176,12 +1319,13 @@ function App() {
                       <th className="py-3 px-4">Document Type</th>
                       <th className="py-3 px-4">Expiry Date</th>
                       <th className="py-3 px-4">Status & Countdown</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
                     {expiringPapers.length === 0 ? (
                       <tr>
-                        <td colSpan="4" className="py-8 text-center text-slate-500 text-xs">All vehicle documentation is fully compliance validated and active.</td>
+                        <td colSpan="6" className="py-8 text-center text-slate-500 text-xs">All vehicle documentation is fully compliance validated and active.</td>
                       </tr>
                     ) : (
                       expiringPapers.map((paper) => {
@@ -1202,6 +1346,10 @@ function App() {
                                   ({isExpired ? `${Math.abs(paper.days_remaining)} days overdue` : `${paper.days_remaining} days remaining`})
                                 </span>
                               </div>
+                            </td>
+                            <td className="py-3.5 px-4 text-right space-x-3">
+                              <button onClick={() => handleEditPaper(paper)} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold text-xs">Edit</button>
+                              <button onClick={() => handleDelete('compliance/paper', paper.id)} className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-semibold text-xs">Delete</button>
                             </td>
                           </tr>
                         );
@@ -1246,7 +1394,7 @@ function App() {
             {modalType === 'vehicle' && (
               <form onSubmit={handleCreateVehicle} className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Add New Fleet Vehicle</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{editId ? 'Edit Fleet Vehicle' : 'Add New Fleet Vehicle'}</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Enter vehicle specs and initial metrics.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -1334,7 +1482,7 @@ function App() {
                   type="submit"
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition-all shadow-md shadow-indigo-600/10"
                 >
-                  Create Vehicle
+                  {editId ? 'Update Vehicle' : 'Create Vehicle'}
                 </button>
               </form>
             )}
@@ -1343,7 +1491,7 @@ function App() {
             {modalType === 'driver' && (
               <form onSubmit={handleCreateDriver} className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Add New Driver Profile</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{editId ? 'Edit Driver' : 'Add New Driver'} Profile</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Complete the driver's licensing metadata.</p>
                 </div>
                 <div>
@@ -1377,7 +1525,7 @@ function App() {
                   type="submit"
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition-all"
                 >
-                  Create Driver Profile
+                  {editId ? 'Update Driver' : 'Create Driver'} Profile
                 </button>
               </form>
             )}
@@ -1430,7 +1578,7 @@ function App() {
             {modalType === 'fuel' && (
               <form onSubmit={handleCreateFuelLog} className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Log Fuel Fill-Up</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{editId ? 'Update Fuel Log' : 'Log Fuel Fill-Up'}</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Append manual fuel transaction details.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -1632,7 +1780,7 @@ function App() {
                   type="submit"
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition-all"
                 >
-                  Log Maintenance Event
+                  {editId ? 'Update Maintenance Event' : 'Log Maintenance Event'}
                 </button>
               </form>
             )}
@@ -1692,7 +1840,7 @@ function App() {
             {modalType === 'misc' && (
               <form onSubmit={handleCreateMiscExpense} className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Log Miscellaneous Expense</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{editId ? 'Update Misc Expense' : 'Log Miscellaneous Expense'}</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Record non-fuel, non-repair operation expenditures (tolls, fines, permits).</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -1769,7 +1917,7 @@ function App() {
                   type="submit"
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition-all"
                 >
-                  Log Miscellaneous Expense
+                  {editId ? 'Update Misc Expense' : 'Log Miscellaneous Expense'}
                 </button>
               </form>
             )}
