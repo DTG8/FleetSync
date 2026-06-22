@@ -45,7 +45,9 @@ ChartJS.register(
   Legend
 );
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://127.0.0.1:8000'
+  : `http://${window.location.hostname}:8000`; // Adjust port if backend is running on a different port (e.g. 8050) on the server
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
