@@ -112,10 +112,11 @@ class TestFleetManagement(unittest.TestCase):
         fuel_in = schemas.FuelLogCreate(
             vehicle_id=vehicle.id, entry_date=datetime.date.today(),
             odometer_reading=12500, fuel_added_liters=35.5, cost=45.0,
-            fuel_gauge_after_fill_percent=95
+            fuel_gauge_after_fill_percent=95, filling_station="Shell Station"
         )
         fuel_log = crud.create_fuel_log(self.db, fuel_in)
         self.assertEqual(fuel_log.odometer_reading, 12500)
+        self.assertEqual(fuel_log.filling_station, "Shell Station")
         # Verify vehicle fields updated
         self.assertEqual(vehicle.current_odometer, 12500)
         self.assertEqual(vehicle.current_fuel_level_percent, 95)
@@ -265,6 +266,55 @@ class TestFleetManagement(unittest.TestCase):
         self.assertEqual(d_item.repair_cost, 150.0)
         self.assertEqual(d_item.misc_cost, 45.0)
         self.assertEqual(d_item.total_tco, 265.0)
+
+    def test_filling_station_analytics(self):
+        # Setup vehicle
+        vehicle_in = schemas.VehicleCreate(
+            plate_number="TEST-STATION", make="Toyota", model="Yaris", year=2021,
+            status="Active", current_odometer=1000, current_fuel_level_percent=100,
+            purchase_date=datetime.date(2021, 1, 1)
+        )
+        vehicle = crud.create_vehicle(self.db, vehicle_in)
+
+        # Log fuel from Shell
+        fuel1 = schemas.FuelLogCreate(
+            vehicle_id=vehicle.id, entry_date=datetime.date.today(),
+            odometer_reading=1100, fuel_added_liters=10.0, cost=15.00,
+            fuel_gauge_after_fill_percent=90, filling_station="Shell"
+        )
+        crud.create_fuel_log(self.db, fuel1)
+
+        # Log fuel from Total
+        fuel2 = schemas.FuelLogCreate(
+            vehicle_id=vehicle.id, entry_date=datetime.date.today(),
+            odometer_reading=1200, fuel_added_liters=20.0, cost=30.00,
+            fuel_gauge_after_fill_percent=95, filling_station="Total"
+        )
+        crud.create_fuel_log(self.db, fuel2)
+
+        # Log another fuel from Shell
+        fuel3 = schemas.FuelLogCreate(
+            vehicle_id=vehicle.id, entry_date=datetime.date.today(),
+            odometer_reading=1300, fuel_added_liters=15.0, cost=25.00,
+            fuel_gauge_after_fill_percent=100, filling_station="Shell"
+        )
+        crud.create_fuel_log(self.db, fuel3)
+
+        # Retrieve filling station stats
+        stats = crud.get_filling_station_analytics(self.db, "weekly")
+        
+        # Verify Shell stats (15.00 + 25.00 = 40.00 spent, 25 liters, 2 logs)
+        shell_stats = next(item for item in stats if item.filling_station == "Shell")
+        self.assertEqual(shell_stats.total_spent, 40.00)
+        self.assertEqual(shell_stats.total_liters, 25.0)
+        self.assertEqual(shell_stats.log_count, 2)
+
+        # Verify Total stats (30.00 spent, 20 liters, 1 log)
+        total_stats = next(item for item in stats if item.filling_station == "Total")
+        self.assertEqual(total_stats.total_spent, 30.00)
+        self.assertEqual(total_stats.total_liters, 20.0)
+        self.assertEqual(total_stats.log_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

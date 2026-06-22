@@ -97,6 +97,7 @@ class FuelLogBase(BaseModel):
     fuel_added_liters: Decimal = Field(..., gt=0)
     cost: Decimal = Field(..., ge=0)
     fuel_gauge_after_fill_percent: int = Field(..., ge=0, le=100)
+    filling_station: Optional[str] = "Unknown"
 
 class FuelLogCreate(FuelLogBase):
     pass
@@ -177,6 +178,13 @@ class ExpiringPaperItem(BaseModel):
     expiry_date: date
     days_remaining: int
     status: str  # 'Expired', 'Expiring Soon'
+
+
+class FillingStationSpendItem(BaseModel):
+    filling_station: str
+    total_spent: float
+    total_liters: float
+    log_count: int
 
 
 # --- FINANCIAL REPORT SCHEMAS ---

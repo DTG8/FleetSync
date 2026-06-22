@@ -198,7 +198,8 @@ def create_fuel_log(db: Session, fuel_log: schemas.FuelLogCreate):
         odometer_reading=fuel_log.odometer_reading,
         fuel_added_liters=fuel_log.fuel_added_liters,
         cost=fuel_log.cost,
-        fuel_gauge_after_fill_percent=fuel_log.fuel_gauge_after_fill_percent
+        fuel_gauge_after_fill_percent=fuel_log.fuel_gauge_after_fill_percent,
+        filling_station=fuel_log.filling_station or "Unknown"
     )
     db.add(db_fuel_log)
 
@@ -430,3 +431,43 @@ def get_financial_report(db: Session, period: str):
         drivers=driver_report,
         period=period
     )
+
+def get_filling_station_analytics(db: Session, period: str):
+    today = datetime.date.today()
+    if period == "weekly":
+        start_date = today - datetime.timedelta(days=6)
+    elif period == "monthly":
+        start_date = today - datetime.timedelta(days=29)
+    elif period == "quarterly":
+        start_date = today - datetime.timedelta(days=89)
+    elif period == "yearly":
+        start_date = today - datetime.timedelta(days=364)
+    else:
+        start_date = today - datetime.timedelta(days=6)
+
+    results = db.query(
+        models.FuelLog.filling_station,
+        func.sum(models.FuelLog.cost).label("total_spent"),
+        func.sum(models.FuelLog.fuel_added_liters).label("total_liters"),
+        func.count(models.FuelLog.id).label("log_count")
+    ).filter(
+        models.FuelLog.entry_date >= start_date
+    ).group_by(
+        models.FuelLog.filling_station
+    ).order_by(
+        func.sum(models.FuelLog.cost).desc()
+    ).all()
+
+    spend_items = []
+    for item in results:
+        station_name = item.filling_station if item.filling_station else "Unknown"
+        spend_items.append(
+            schemas.FillingStationSpendItem(
+                filling_station=station_name,
+                total_spent=float(item.total_spent) if item.total_spent is not None else 0.0,
+                total_liters=float(item.total_liters) if item.total_liters is not None else 0.0,
+                log_count=item.log_count or 0
+            )
+        )
+    return spend_items
+

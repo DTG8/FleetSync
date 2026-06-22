@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 import datetime
@@ -6,6 +6,7 @@ from typing import List
 from database import get_db
 import models
 import schemas
+import crud
 
 router = APIRouter(
     prefix="/analytics",
@@ -114,3 +115,11 @@ def get_maintenance_recurrent(db: Session = Depends(get_db)):
             )
         )
     return maintenance_recurrent
+
+@router.get("/filling-stations", response_model=List[schemas.FillingStationSpendItem])
+def get_filling_stations_analytics(
+    period: str = Query("weekly", regex="^(weekly|monthly|quarterly|yearly)$"),
+    db: Session = Depends(get_db)
+):
+    return crud.get_filling_station_analytics(db=db, period=period)
+

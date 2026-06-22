@@ -72,6 +72,7 @@ function App() {
   const [maintenanceLogs, setMaintenanceLogs] = useState([]);
   const [miscExpenses, setMiscExpenses] = useState([]);
   const [financialReport, setFinancialReport] = useState({ vehicles: [], drivers: [], period: 'weekly' });
+  const [fillingStationStats, setFillingStationStats] = useState([]);
 
   // Modals & Forms State
   const [showModal, setShowModal] = useState(false);
@@ -83,7 +84,7 @@ function App() {
   const [vehicleForm, setVehicleForm] = useState({ plate_number: '', make: '', model: '', year: new Date().getFullYear(), status: 'Active', current_odometer: 0, current_fuel_level_percent: 100, purchase_date: '' });
   const [driverForm, setDriverForm] = useState({ full_name: '', license_number: '', phone_number: '', status: 'Available' });
   const [allocationForm, setAllocationForm] = useState({ vehicle_id: '', driver_id: '' });
-  const [fuelForm, setFuelForm] = useState({ vehicle_id: '', driver_id: '', entry_date: new Date().toISOString().split('T')[0], odometer_reading: '', fuel_added_liters: '', cost: '', fuel_gauge_after_fill_percent: '' });
+  const [fuelForm, setFuelForm] = useState({ vehicle_id: '', driver_id: '', entry_date: new Date().toISOString().split('T')[0], odometer_reading: '', fuel_added_liters: '', cost: '', fuel_gauge_after_fill_percent: '', filling_station: '' });
   const [maintenanceForm, setMaintenanceForm] = useState({ vehicle_id: '', driver_id: '', issue_description: '', type: 'Routine Service', status: 'Pending', cost: '', logged_at: new Date().toISOString().split('T')[0], resolved_at: '' });
   const [paperForm, setPaperForm] = useState({ vehicle_id: '', document_type: 'Insurance', expiry_date: '' });
   const [miscForm, setMiscForm] = useState({ vehicle_id: '', driver_id: '', amount: '', description: '', entry_date: new Date().toISOString().split('T')[0], category: 'Toll' });
@@ -104,7 +105,7 @@ function App() {
       const [
         resMetrics, resVehicles, resDrivers, resAllocations, 
         resExpiring, resRecurrent, resWeekly, resFuelLogs, 
-        resMaintLogs, resMiscLogs, resFinReport
+        resMaintLogs, resMiscLogs, resFinReport, resStationStats
       ] = await Promise.all([
         axios.get(`${API_BASE}/analytics/dashboard`),
         axios.get(`${API_BASE}/vehicles`),
@@ -116,7 +117,8 @@ function App() {
         axios.get(`${API_BASE}/fuel-logs`),
         axios.get(`${API_BASE}/maintenance-logs`),
         axios.get(`${API_BASE}/miscellaneous-expenses`),
-        axios.get(`${API_BASE}/analytics/financial-report?period=${financialPeriod}`)
+        axios.get(`${API_BASE}/analytics/financial-report?period=${financialPeriod}`),
+        axios.get(`${API_BASE}/analytics/filling-stations?period=${financialPeriod}`)
       ]);
 
       setMetrics(resMetrics.data);
@@ -130,6 +132,7 @@ function App() {
       setMaintenanceLogs(resMaintLogs.data);
       setMiscExpenses(resMiscLogs.data);
       setFinancialReport(resFinReport.data);
+      setFillingStationStats(resStationStats.data);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     }
@@ -213,7 +216,7 @@ function App() {
       if (!payload.driver_id) delete payload.driver_id;
       await axios.post(`${API_BASE}/fuel-logs`, payload);
       setSuccessMsg('Fuel fill-up logged successfully!');
-      setFuelForm({ vehicle_id: '', driver_id: '', entry_date: new Date().toISOString().split('T')[0], odometer_reading: '', fuel_added_liters: '', cost: '', fuel_gauge_after_fill_percent: '' });
+      setFuelForm({ vehicle_id: '', driver_id: '', entry_date: new Date().toISOString().split('T')[0], odometer_reading: '', fuel_added_liters: '', cost: '', fuel_gauge_after_fill_percent: '', filling_station: '' });
       loadAllData();
       setTimeout(handleCloseModal, 1500);
     } catch (err) {
@@ -982,58 +985,98 @@ function App() {
 
           {/* TAB 5: FUEL LOGS */}
           {activeTab === 'fuel' && (
-            <div className="glass-panel rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Fuel Fill-up Logs</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Manual fuel usage logging history. Updates vehicle odometer readings automatically.</p>
+            <div className="space-y-8">
+              <div className="glass-panel rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Fuel Fill-up Logs</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Manual fuel usage logging history. Updates vehicle odometer readings automatically.</p>
+                  </div>
+                  <button
+                    onClick={() => handleOpenModal('fuel')}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Log Fuel Fill-Up</span>
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleOpenModal('fuel')}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-1"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Log Fuel Fill-Up</span>
-                </button>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold">
+                        <th className="py-3 px-4">Vehicle</th>
+                        <th className="py-3 px-4">Driver</th>
+                        <th className="py-3 px-4">Filling Station</th>
+                        <th className="py-3 px-4">Entry Date</th>
+                        <th className="py-3 px-4">Odometer Reading</th>
+                        <th className="py-3 px-4">Fuel Added</th>
+                        <th className="py-3 px-4">Cost</th>
+                        <th className="py-3 px-4">Gauge Post-Fill</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
+                      {fuelLogs.length === 0 ? (
+                        <tr>
+                          <td colSpan="8" className="py-8 text-center text-slate-500 text-xs">No fuel logs registered. Click "Log Fuel Fill-Up" to record.</td>
+                        </tr>
+                      ) : (
+                        fuelLogs.map((log) => {
+                          const vObj = vehicles.find(v => v.id === log.vehicle_id);
+                          const dObj = drivers.find(d => d.id === log.driver_id);
+                          return (
+                            <tr key={log.id} className="hover:bg-slate-200/20 dark:hover:bg-slate-900/30">
+                              <td className="py-3.5 px-4 font-semibold text-indigo-600 dark:text-indigo-400">{vObj?.plate_number || `ID: ${log.vehicle_id}`}</td>
+                              <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">{dObj?.full_name || `ID: ${log.driver_id || 'N/A'}`}</td>
+                              <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">{log.filling_station || 'Unknown'}</td>
+                              <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-xs">{log.entry_date}</td>
+                              <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-mono">{log.odometer_reading.toLocaleString()} km</td>
+                              <td className="py-3.5 px-4 text-slate-800 dark:text-slate-200 font-semibold">{log.fuel_added_liters} Liters</td>
+                              <td className="py-3.5 px-4 text-rose-500 font-semibold">₦{log.cost}</td>
+                              <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">{log.fuel_gauge_after_fill_percent}%</td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold">
-                      <th className="py-3 px-4">Vehicle</th>
-                      <th className="py-3 px-4">Driver</th>
-                      <th className="py-3 px-4">Entry Date</th>
-                      <th className="py-3 px-4">Odometer Reading</th>
-                      <th className="py-3 px-4">Fuel Added</th>
-                      <th className="py-3 px-4">Cost</th>
-                      <th className="py-3 px-4">Gauge Post-Fill</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
-                    {fuelLogs.length === 0 ? (
-                      <tr>
-                        <td colSpan="7" className="py-8 text-center text-slate-500 text-xs">No fuel logs registered. Click "Log Fuel Fill-Up" to record.</td>
+              {/* Filling Station Expenditures Stats */}
+              <div className="glass-panel rounded-2xl p-6">
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Filling Station Expenditures</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Total spending, fuel purchased, and visit counts aggregated by filling station over the selected period ({financialPeriod}).</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold">
+                        <th className="py-3 px-4">Filling Station</th>
+                        <th className="py-3 px-4 text-right">Fuel Added (Liters)</th>
+                        <th className="py-3 px-4 text-right">Log Count</th>
+                        <th className="py-3 px-4 text-right">Total Spent</th>
                       </tr>
-                    ) : (
-                      fuelLogs.map((log) => {
-                        const vObj = vehicles.find(v => v.id === log.vehicle_id);
-                        const dObj = drivers.find(d => d.id === log.driver_id);
-                        return (
-                          <tr key={log.id} className="hover:bg-slate-200/20 dark:hover:bg-slate-900/30">
-                            <td className="py-3.5 px-4 font-semibold text-indigo-600 dark:text-indigo-400">{vObj?.plate_number || `ID: ${log.vehicle_id}`}</td>
-                            <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">{dObj?.full_name || `ID: ${log.driver_id || 'N/A'}`}</td>
-                            <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-xs">{log.entry_date}</td>
-                            <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-mono">{log.odometer_reading.toLocaleString()} km</td>
-                            <td className="py-3.5 px-4 text-slate-800 dark:text-slate-200 font-semibold">{log.fuel_added_liters} Liters</td>
-                            <td className="py-3.5 px-4 text-rose-500 font-semibold">₦{log.cost}</td>
-                            <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">{log.fuel_gauge_after_fill_percent}%</td>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
+                      {fillingStationStats.length === 0 ? (
+                        <tr>
+                          <td colSpan="4" className="py-8 text-center text-slate-500 text-xs">No expenditure records registered in this period.</td>
+                        </tr>
+                      ) : (
+                        fillingStationStats.map((item, idx) => (
+                          <tr key={idx} className="hover:bg-slate-200/20 dark:hover:bg-slate-900/30">
+                            <td className="py-3.5 px-4 font-semibold text-indigo-600 dark:text-indigo-400">{item.filling_station}</td>
+                            <td className="py-3.5 px-4 text-right text-slate-700 dark:text-slate-300">{item.total_liters.toFixed(2)} L</td>
+                            <td className="py-3.5 px-4 text-right text-slate-700 dark:text-slate-300 font-mono">{item.log_count}</td>
+                            <td className="py-3.5 px-4 text-right text-rose-500 font-bold">₦{item.total_spent.toFixed(2)}</td>
                           </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -1416,6 +1459,15 @@ function App() {
                       ))}
                     </select>
                   </div>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Filling Station</label>
+                  <input
+                    type="text" placeholder="e.g. Total, Shell, Mobil"
+                    value={fuelForm.filling_station}
+                    onChange={(e) => setFuelForm({ ...fuelForm, filling_station: e.target.value })}
+                    className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>

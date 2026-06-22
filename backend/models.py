@@ -65,6 +65,7 @@ class FuelLog(Base):
     fuel_added_liters = Column(Numeric(precision=10, scale=2), nullable=False)
     cost = Column(Numeric(precision=10, scale=2), nullable=False)
     fuel_gauge_after_fill_percent = Column(Integer, nullable=False)
+    filling_station = Column(String, nullable=True, default="Unknown")
 
     # Relationships
     vehicle = relationship("Vehicle", back_populates="fuel_logs")

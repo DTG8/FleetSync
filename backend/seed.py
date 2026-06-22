@@ -61,36 +61,36 @@ def seed_db():
         f1 = models.FuelLog(
             vehicle_id=v1.id, driver_id=d2.id, entry_date=today - datetime.timedelta(days=10),
             odometer_reading=14500, fuel_added_liters=40.0, cost=50.0,
-            fuel_gauge_after_fill_percent=95
+            fuel_gauge_after_fill_percent=95, filling_station="Total"
         )
         f2 = models.FuelLog(
             vehicle_id=v1.id, driver_id=d1.id, entry_date=today - datetime.timedelta(days=3),
             odometer_reading=15000, fuel_added_liters=42.0, cost=55.0,
-            fuel_gauge_after_fill_percent=85
+            fuel_gauge_after_fill_percent=85, filling_station="Shell"
         )
         
         # F-150
         f3 = models.FuelLog(
             vehicle_id=v2.id, driver_id=d3.id, entry_date=today - datetime.timedelta(days=8),
             odometer_reading=44200, fuel_added_liters=70.0, cost=95.0,
-            fuel_gauge_after_fill_percent=80
+            fuel_gauge_after_fill_percent=80, filling_station="Mobil"
         )
         f4 = models.FuelLog(
             vehicle_id=v2.id, driver_id=d3.id, entry_date=today - datetime.timedelta(days=4),
             odometer_reading=44800, fuel_added_liters=68.0, cost=90.0,
-            fuel_gauge_after_fill_percent=30
+            fuel_gauge_after_fill_percent=30, filling_station="Shell"
         )
 
         # Hino Truck
         f5 = models.FuelLog(
             vehicle_id=v4.id, driver_id=d1.id, entry_date=today - datetime.timedelta(days=11),
             odometer_reading=88200, fuel_added_liters=90.0, cost=120.0,
-            fuel_gauge_after_fill_percent=95
+            fuel_gauge_after_fill_percent=95, filling_station="Oando"
         )
         f6 = models.FuelLog(
             vehicle_id=v4.id, driver_id=d2.id, entry_date=today - datetime.timedelta(days=2),
             odometer_reading=89000, fuel_added_liters=95.0, cost=130.0,
-            fuel_gauge_after_fill_percent=90
+            fuel_gauge_after_fill_percent=90, filling_station="Total"
         )
         
         db.add_all([f1, f2, f3, f4, f5, f6])
