@@ -157,8 +157,10 @@ function App() {
     setSuccessMsg('');
   };
 
-  const handleOpenModal = (type) => {
-    setEditId(null);
+  const handleOpenModal = (type, isEdit = false) => {
+    if (!isEdit) {
+      setEditId(null);
+    }
     setModalType(type);
     clearMessages();
     setShowModal(true);
@@ -193,7 +195,7 @@ function App() {
       purchase_date: v.purchase_date
     });
     setEditId(v.id);
-    handleOpenModal('vehicle');
+    handleOpenModal('vehicle', true);
   };
 
   
@@ -209,7 +211,7 @@ function App() {
       filling_station: log.filling_station || ''
     });
     setEditId(log.id);
-    handleOpenModal('fuel');
+    handleOpenModal('fuel', true);
   };
 
   const handleEditMaintenanceLog = (log) => {
@@ -224,7 +226,7 @@ function App() {
       resolved_at: log.resolved_at || ''
     });
     setEditId(log.id);
-    handleOpenModal('maintenance');
+    handleOpenModal('maintenance', true);
   };
 
   const handleEditPaper = (paper) => {
@@ -234,7 +236,7 @@ function App() {
       expiry_date: paper.expiry_date
     });
     setEditId(paper.id);
-    handleOpenModal('paper');
+    handleOpenModal('paper', true);
   };
 
   const handleEditMiscExpense = (exp) => {
@@ -247,7 +249,7 @@ function App() {
       category: exp.category
     });
     setEditId(exp.id);
-    handleOpenModal('misc');
+    handleOpenModal('misc', true);
   };
 
   const handleEditDriver = (d) => {
@@ -258,7 +260,7 @@ function App() {
       status: d.status
     });
     setEditId(d.id);
-    handleOpenModal('driver');
+    handleOpenModal('driver', true);
   };
 
   // API Call Handlers
