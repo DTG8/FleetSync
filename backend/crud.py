@@ -5,12 +5,12 @@ import schemas
 import datetime
 from fastapi import HTTPException, status
 
-from passlib.context import CryptContext
+import bcrypt
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
+def get_password_hash(password: str) -> str:
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 # --- USER CRUD ---
 def get_user_by_email(db: Session, email: str):
