@@ -1817,6 +1817,10 @@ function App() {
                     <option value="Insurance">Insurance</option>
                     <option value="Roadworthiness">Roadworthiness</option>
                     <option value="Registration">Registration</option>
+                    <option value="LG papers">LG papers</option>
+                    <option value="Proof of Ownership">Proof of Ownership</option>
+                    <option value="Vehicle License">Vehicle License</option>
+                    <option value="Hackney permit">Hackney permit</option>
                   </select>
                 </div>
                 <div>
