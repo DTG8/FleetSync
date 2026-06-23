@@ -150,8 +150,13 @@ const VehicleProfileDrawer = ({ vehicleId, onClose, apiBase }) => {
                           </div>
                         )}
                         {event.status && (
-                          <div className="mt-2">
+                          <div className="mt-2 flex items-center space-x-2">
                             <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Status: {event.status}</span>
+                            {event.returned_at && (
+                              <span className="text-xs text-slate-500 dark:text-slate-400 border-l border-slate-300 dark:border-slate-600 pl-2">
+                                Returned: {new Date(event.returned_at).toLocaleString()}
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
