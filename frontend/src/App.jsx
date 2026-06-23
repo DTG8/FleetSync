@@ -307,18 +307,13 @@ function App() {
     }
   };
 
-  const handleCreateFuelLog = async (e) => {
-    e.preventDefault();
-    clearMessages();
-    try {
-      const payload = { ...fuelForm };
 
   const handleCreateAssignment = async (e) => {
     e.preventDefault();
     try {
       await axios.post(`${API_BASE}/assignments/`, assignmentForm);
       setSuccessMsg("Vehicle dispatched successfully!");
-      setShowAssignmentModal(false);
+      setModalType(null);
       fetchDashboardData();
       fetchVehicles();
       fetchDrivers();
@@ -326,6 +321,12 @@ function App() {
       setErrorMsg(err.response?.data?.detail || "Failed to dispatch vehicle.");
     }
   };
+
+  const handleCreateFuelLog = async (e) => {
+    e.preventDefault();
+    clearMessages();
+    try {
+      const payload = { ...fuelForm };
 
       if (!payload.driver_id) delete payload.driver_id;
       if (editId) {
