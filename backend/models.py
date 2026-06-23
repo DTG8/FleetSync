@@ -22,6 +22,8 @@ class Vehicle(Base):
     maintenance_logs = relationship("MaintenanceLog", back_populates="vehicle", cascade="all, delete-orphan")
     papers = relationship("VehiclePaper", back_populates="vehicle", cascade="all, delete-orphan")
     miscellaneous_expenses = relationship("MiscellaneousExpense", back_populates="vehicle", cascade="all, delete-orphan")
+    assignments = relationship("Assignment", back_populates="vehicle", cascade="all, delete-orphan")
+    accessories = relationship("VehicleAccessory", back_populates="vehicle", cascade="all, delete-orphan")
 
 
 class Driver(Base):
@@ -31,13 +33,17 @@ class Driver(Base):
     full_name = Column(String, nullable=False)
     license_number = Column(String, unique=True, index=True, nullable=False)
     phone_number = Column(String, nullable=False)
-    status = Column(String, nullable=False, default="Available")  # 'Available', 'Assigned'
+    status = Column(String, nullable=False, default="Available")  # 'Available', 'On Leave', 'On Assignment'
+    photo_url = Column(String, nullable=True)
+    allocated_vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=True)
 
     # Relationships
     allocations = relationship("Allocation", back_populates="driver", cascade="all, delete-orphan")
+    assignments = relationship("Assignment", back_populates="driver", cascade="all, delete-orphan")
     fuel_logs = relationship("FuelLog", back_populates="driver")
     maintenance_logs = relationship("MaintenanceLog", back_populates="driver")
     miscellaneous_expenses = relationship("MiscellaneousExpense", back_populates="driver")
+    allocated_vehicle = relationship("Vehicle", foreign_keys=[allocated_vehicle_id])
 
 
 class Allocation(Base):
@@ -117,3 +123,42 @@ class MiscellaneousExpense(Base):
     # Relationships
     vehicle = relationship("Vehicle", back_populates="miscellaneous_expenses")
     driver = relationship("Driver", back_populates="miscellaneous_expenses")
+
+
+class Assignment(Base):
+    __tablename__ = "assignments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False)
+    driver_id = Column(Integer, ForeignKey("drivers.id"), nullable=False)
+    task_description = Column(String, nullable=True)
+    dispatched_at = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    returned_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    vehicle = relationship("Vehicle", back_populates="assignments")
+    driver = relationship("Driver", back_populates="assignments")
+
+class VehicleAccessory(Base):
+    __tablename__ = "vehicle_accessories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False)
+    item_name = Column(String, nullable=False)
+    status = Column(String, nullable=False, default="Present") # Present, Missing, Damaged
+    last_updated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+
+    vehicle = relationship("Vehicle", back_populates="accessories")
+
+class VehicleAccessoryHistory(Base):
+    __tablename__ = "vehicle_accessory_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False)
+    accessory_id = Column(Integer, ForeignKey("vehicle_accessories.id"), nullable=False)
+    item_name = Column(String, nullable=False)
+    old_status = Column(String, nullable=True)
+    new_status = Column(String, nullable=False)
+    updated_at = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+
+    vehicle = relationship("Vehicle")

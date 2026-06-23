@@ -34,6 +34,9 @@ import {
   ShieldAlert,
   ArrowRightLeft
 } from 'lucide-react';
+import DriverProfileDrawer from './components/DriverProfileDrawer';
+import VehicleProfileDrawer from './components/VehicleProfileDrawer';
+
 
 // Register Chart.js components
 ChartJS.register(
@@ -309,6 +312,21 @@ function App() {
     clearMessages();
     try {
       const payload = { ...fuelForm };
+
+  const handleCreateAssignment = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_BASE}/assignments/`, assignmentForm);
+      setSuccessMsg("Vehicle dispatched successfully!");
+      setShowAssignmentModal(false);
+      fetchDashboardData();
+      fetchVehicles();
+      fetchDrivers();
+    } catch (err) {
+      setErrorMsg(err.response?.data?.detail || "Failed to dispatch vehicle.");
+    }
+  };
+
       if (!payload.driver_id) delete payload.driver_id;
       if (editId) {
         await axios.put(`${API_BASE}/fuel-logs/${editId}`, payload);
@@ -738,7 +756,7 @@ function App() {
                         <p className="text-xs text-slate-500 dark:text-slate-400">Current active allocations. Make new allocations via forms.</p>
                       </div>
                       <button
-                        onClick={() => handleOpenModal('allocation')}
+                        onClick={() => handleOpenModal('assignment')}
                         className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1"
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -1367,7 +1385,14 @@ function App() {
         </div>
       </main>
 
-      {/* POPUP MODAL & DRAWER SYSTEM */}
+      
+      {selectedDriverId && (
+        <DriverProfileDrawer driverId={selectedDriverId} onClose={() => setSelectedDriverId(null)} apiBase={API_BASE} />
+      )}
+      {selectedVehicleId && (
+        <VehicleProfileDrawer vehicleId={selectedVehicleId} onClose={() => setSelectedVehicleId(null)} apiBase={API_BASE} />
+      )}
+{/* POPUP MODAL & DRAWER SYSTEM */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
           <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 relative overflow-y-auto max-h-[90vh] text-slate-800 dark:text-slate-100 transition-colors duration-200">
@@ -1524,6 +1549,18 @@ function App() {
                     className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
+                  <div>
+                    <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Photo URL</label>
+                    <input type="text" placeholder="https://..." value={driverForm.photo_url || ''} onChange={(e) => setDriverForm({ ...driverForm, photo_url: e.target.value })} className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Permanently Allocated Vehicle</label>
+                    <select value={driverForm.allocated_vehicle_id || ''} onChange={(e) => setDriverForm({ ...driverForm, allocated_vehicle_id: e.target.value })} className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500">
+                      <option value="">-- No Allocation --</option>
+                      {vehicles.map(v => <option key={v.id} value={v.id}>{v.plate_number} - {v.make}</option>)}
+                    </select>
+                  </div>
+
                 <button
                   type="submit"
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition-all"
@@ -1534,6 +1571,39 @@ function App() {
             )}
 
             {/* FORM 3: ALLOCATION */}
+            
+            {modalType === 'assignment' && (
+              <form onSubmit={handleCreateAssignment} className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Dispatch Vehicle (Temporary Assignment)</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Assign a vehicle to a driver for a specific task.</p>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Select Vehicle *</label>
+                  <select required value={assignmentForm.vehicle_id} onChange={(e) => setAssignmentForm({ ...assignmentForm, vehicle_id: e.target.value })} className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white">
+                    <option value="">-- Choose Vehicle --</option>
+                    {vehicles.map(v => <option key={v.id} value={v.id}>{v.plate_number} - {v.make} {v.model}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Select Driver *</label>
+                  <select required value={assignmentForm.driver_id} onChange={(e) => setAssignmentForm({ ...assignmentForm, driver_id: e.target.value })} className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white">
+                    <option value="">-- Choose Driver --</option>
+                    {drivers.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Dispatch Date/Time *</label>
+                  <input type="datetime-local" required value={assignmentForm.dispatched_at} onChange={(e) => setAssignmentForm({ ...assignmentForm, dispatched_at: e.target.value })} className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white" />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Task Description</label>
+                  <input type="text" placeholder="e.g. Delivery to Lagos Island" value={assignmentForm.task_description} onChange={(e) => setAssignmentForm({ ...assignmentForm, task_description: e.target.value })} className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white" />
+                </div>
+                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl mt-4">Dispatch Vehicle</button>
+              </form>
+            )}
+
             {modalType === 'allocation' && (
               <form onSubmit={handleCreateAllocation} className="space-y-4">
                 <div>

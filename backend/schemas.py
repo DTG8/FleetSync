@@ -62,7 +62,9 @@ class DriverBase(BaseModel):
     full_name: str
     license_number: str
     phone_number: str
-    status: str = "Available"  # 'Available', 'Assigned'
+    status: str = "Available"  # 'Available', 'On Leave', 'On Assignment'
+    photo_url: Optional[str] = None
+    allocated_vehicle_id: Optional[int] = None
 
 class DriverCreate(DriverBase):
     pass
@@ -72,6 +74,8 @@ class DriverUpdate(BaseModel):
     license_number: Optional[str] = None
     phone_number: Optional[str] = None
     status: Optional[str] = None
+    photo_url: Optional[str] = None
+    allocated_vehicle_id: Optional[int] = None
 
 class DriverResponse(DriverBase):
     id: int
@@ -247,3 +251,57 @@ class FinancialReportResponse(BaseModel):
     vehicles: List[VehicleFinancialItem]
     drivers: List[DriverFinancialItem]
     period: str
+
+
+# --- ASSIGNMENT SCHEMAS ---
+class AssignmentBase(BaseModel):
+    vehicle_id: int
+    driver_id: int
+    task_description: Optional[str] = None
+
+class AssignmentCreate(AssignmentBase):
+    dispatched_at: Optional[datetime] = None
+
+class AssignmentUpdate(BaseModel):
+    returned_at: Optional[datetime] = None
+
+class AssignmentResponse(AssignmentBase):
+    id: int
+    dispatched_at: datetime
+    returned_at: Optional[datetime] = None
+    vehicle_plate: Optional[str] = None
+    driver_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+# --- ACCESSORY SCHEMAS ---
+class VehicleAccessoryBase(BaseModel):
+    vehicle_id: int
+    item_name: str
+    status: str = "Present"
+
+class VehicleAccessoryCreate(VehicleAccessoryBase):
+    pass
+
+class VehicleAccessoryUpdate(BaseModel):
+    status: Optional[str] = None
+
+class VehicleAccessoryResponse(VehicleAccessoryBase):
+    id: int
+    last_updated: datetime
+
+    class Config:
+        from_attributes = True
+
+class VehicleAccessoryHistoryResponse(BaseModel):
+    id: int
+    vehicle_id: int
+    accessory_id: int
+    item_name: str
+    old_status: Optional[str] = None
+    new_status: str
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

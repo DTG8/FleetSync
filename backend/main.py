@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine
-from routers import vehicles, drivers, allocations, fuel_logs, maintenance_logs, analytics, compliance, financials
+from routers import vehicles, drivers, allocations, fuel_logs, maintenance_logs, analytics, compliance, financials, assignments, accessories, profiles
 
 # Create tables
 models.Base.metadata.create_all(bind=engine)
@@ -31,6 +31,9 @@ app.include_router(maintenance_logs.router)
 app.include_router(analytics.router)
 app.include_router(compliance.router)
 app.include_router(financials.router)
+app.include_router(assignments.router)
+app.include_router(accessories.router)
+app.include_router(profiles.router)
 
 @app.get("/")
 def read_root():
