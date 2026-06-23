@@ -112,7 +112,7 @@ const DriverProfileDrawer = ({ driverId, onClose, apiBase }) => {
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center space-x-2">
               <Clock size={18} className="text-amber-500" />
-              <span>Temporary Dispatch History</span>
+              <span>Dispatch History</span>
             </h3>
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
               <table className="w-full text-left text-sm">

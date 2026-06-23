@@ -76,9 +76,21 @@ def get_vehicle_profile(vehicle_id: int, db: Session = Depends(get_db)):
             "category": "Assignment",
             "date": a.dispatched_at.date() if a.dispatched_at else None,
             "datetime": a.dispatched_at,
-            "title": f"Assigned to {d.full_name if d else 'Unknown'}",
+            "title": f"Dispatched to {d.full_name if d else 'Unknown'}",
             "description": a.task_description or "Task assignment",
             "status": "Completed" if a.returned_at else "Active"
+        })
+        
+    allocations = db.query(models.Allocation).filter(models.Allocation.vehicle_id == vehicle_id).all()
+    for al in allocations:
+        d = db.query(models.Driver).filter(models.Driver.id == al.driver_id).first()
+        history.append({
+            "category": "Allocation",
+            "date": al.allocated_at.date() if al.allocated_at else None,
+            "datetime": al.allocated_at,
+            "title": f"Allocated to {d.full_name if d else 'Unknown'}",
+            "description": "Permanent/Long-term Allocation",
+            "status": "Returned" if al.returned_at else "Active"
         })
         
     maintenance = db.query(models.MaintenanceLog).filter(models.MaintenanceLog.vehicle_id == vehicle_id).all()

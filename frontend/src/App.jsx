@@ -75,8 +75,9 @@ function App() {
   const [fuelLogs, setFuelLogs] = useState([]);
   const [maintenanceLogs, setMaintenanceLogs] = useState([]);
   const [miscExpenses, setMiscExpenses] = useState([]);
-  const [financialReport, setFinancialReport] = useState({ vehicles: [], drivers: [], period: 'weekly' });
+  const [financialReport, setFinancialReport] = useState({ vehicles: [], totals: {} });
   const [fillingStationStats, setFillingStationStats] = useState([]);
+  const [assignments, setAssignments] = useState([]);
 
   // Modals & Forms State
   const [showModal, setShowModal] = useState(false);
@@ -128,6 +129,7 @@ function App() {
     fetchSafe(`${API_BASE}/vehicles`, setVehicles);
     fetchSafe(`${API_BASE}/drivers`, setDrivers);
     fetchSafe(`${API_BASE}/allocations`, setAllocations);
+    fetchSafe(`${API_BASE}/assignments`, setAssignments);
     fetchSafe(`${API_BASE}/compliance/expiring-papers`, setExpiringPapers);
     fetchSafe(`${API_BASE}/analytics/maintenance-recurrent`, setRecurrentMaintenance);
     fetchSafe(`${API_BASE}/analytics/weekly-fuel`, setWeeklyFuel);
@@ -750,20 +752,20 @@ function App() {
               {/* Lower Layer Grid: Active allocations & Compliance panels */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Active Driver Assignments */}
+                {/* Driver Dispatch History */}
                 <div className="glass-panel rounded-2xl p-6 lg:col-span-2 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Active Driver Assignments</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Current active allocations. Make new allocations via forms.</p>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Driver Dispatch History</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Temporary vehicle assignments for specific tasks.</p>
                       </div>
                       <button
-                        onClick={() => handleOpenModal('allocation')}
+                        onClick={() => handleOpenModal('assignment')}
                         className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Assign Driver</span>
+                        <span>Dispatch Vehicle</span>
                       </button>
                     </div>
 
@@ -771,30 +773,31 @@ function App() {
                       <table className="w-full text-left border-collapse">
                         <thead>
                           <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold">
-                            <th className="py-3 px-2">Vehicle Plate</th>
+                            <th className="py-3 px-2">Vehicle</th>
                             <th className="py-3 px-2">Driver</th>
-                            <th className="py-3 px-2">Allocated At</th>
-                            <th className="py-3 px-2 text-right">Action</th>
+                            <th className="py-3 px-2">Task</th>
+                            <th className="py-3 px-2">Dispatched</th>
+                            <th className="py-3 px-2 text-right">Status</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/40 text-sm">
-                          {allocations.filter(a => a.returned_at === null).length === 0 ? (
+                          {assignments.length === 0 ? (
                             <tr>
-                              <td colSpan="4" className="py-6 text-center text-slate-500 text-xs">No active allocations found.</td>
+                              <td colSpan="5" className="py-6 text-center text-slate-500 text-xs">No dispatch history found.</td>
                             </tr>
                           ) : (
-                            allocations.filter(a => a.returned_at === null).map((alloc) => (
-                              <tr key={alloc.id} className="hover:bg-slate-200/20 dark:hover:bg-slate-900/30">
-                                <td className="py-3 px-2 font-semibold text-indigo-600 dark:text-indigo-400">{alloc.vehicle_plate || `ID: ${alloc.vehicle_id}`}</td>
-                                <td className="py-3 px-2 text-slate-700 dark:text-slate-300">{alloc.driver_name || `ID: ${alloc.driver_id}`}</td>
-                                <td className="py-3 px-2 text-slate-500 dark:text-slate-400 text-xs">{new Date(alloc.allocated_at).toLocaleString()}</td>
+                            assignments.map((assignment) => (
+                              <tr key={assignment.id} className="hover:bg-slate-200/20 dark:hover:bg-slate-900/30">
+                                <td className="py-3 px-2 font-semibold text-indigo-600 dark:text-indigo-400">{assignment.vehicle_plate}</td>
+                                <td className="py-3 px-2 text-slate-700 dark:text-slate-300">{assignment.driver_name}</td>
+                                <td className="py-3 px-2 text-slate-600 dark:text-slate-400 max-w-[150px] truncate">{assignment.task_description || '-'}</td>
+                                <td className="py-3 px-2 text-slate-500 dark:text-slate-400 text-xs">{new Date(assignment.dispatched_at).toLocaleString()}</td>
                                 <td className="py-3 px-2 text-right">
-                                  <button
-                                    onClick={() => handleReturnVehicle(alloc.id)}
-                                    className="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-emerald-500 dark:hover:text-emerald-400 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-lg text-xs transition-all"
-                                  >
-                                    De-allocate/Return
-                                  </button>
+                                  {assignment.returned_at ? (
+                                    <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded-md">Returned {new Date(assignment.returned_at).toLocaleDateString()}</span>
+                                  ) : (
+                                    <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 px-2 py-1 rounded-md font-semibold animate-pulse">Active</span>
+                                  )}
                                 </td>
                               </tr>
                             ))
@@ -1553,6 +1556,19 @@ function App() {
                     onChange={(e) => setDriverForm({ ...driverForm, photo_url: e.target.value })}
                     className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
                   />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Status</label>
+                  <select
+                    value={driverForm.status}
+                    onChange={(e) => setDriverForm({ ...driverForm, status: e.target.value })}
+                    className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="Available">Available</option>
+                    <option value="On Leave">On Leave</option>
+                    <option value="On Assignment">On Assignment</option>
+                    <option value="On Site">On Site</option>
+                  </select>
                 </div>
                 <div>
                   <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Permanently Allocated Vehicle</label>
