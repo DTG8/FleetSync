@@ -210,10 +210,11 @@ class ExpiringPaperItem(BaseModel):
     id: int
     vehicle_id: int
     plate_number: str
+    make_model: Optional[str] = None
     document_type: str
     expiry_date: date
     days_remaining: int
-    status: str  # 'Expired', 'Expiring Soon'
+    status: str  # 'Expired', 'Expiring Soon', 'Valid'
 
 
 class FillingStationSpendItem(BaseModel):

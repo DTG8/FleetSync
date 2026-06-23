@@ -21,9 +21,10 @@ def get_expiring_papers(db: Session = Depends(get_db)):
     for paper in papers:
         days_remaining = (paper.expiry_date - today).days
         
-        # Get the vehicle plate
+        # Get the vehicle plate and make_model
         vehicle = db.query(models.Vehicle).filter(models.Vehicle.id == paper.vehicle_id).first()
         plate_number = vehicle.plate_number if vehicle else "Unknown"
+        make_model = f"{vehicle.make} {vehicle.model}" if vehicle else "Unknown"
         
         if days_remaining < 0:
             status_str = "Expired"
@@ -37,6 +38,7 @@ def get_expiring_papers(db: Session = Depends(get_db)):
                 id=paper.id,
                 vehicle_id=paper.vehicle_id,
                 plate_number=plate_number,
+                make_model=make_model,
                 document_type=paper.document_type,
                 expiry_date=paper.expiry_date,
                 days_remaining=days_remaining,
