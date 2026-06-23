@@ -9,7 +9,7 @@ router = APIRouter(
     tags=["Assignments"]
 )
 
-@router.get("/", response_model=List[schemas.AssignmentResponse])
+@router.get("", response_model=List[schemas.AssignmentResponse])
 def get_assignments(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     assignments = db.query(models.Assignment).offset(skip).limit(limit).all()
     # Populate vehicle plate and driver name
@@ -20,7 +20,7 @@ def get_assignments(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
         a.driver_name = d.full_name if d else "Unknown"
     return assignments
 
-@router.post("/", response_model=schemas.AssignmentResponse)
+@router.post("", response_model=schemas.AssignmentResponse)
 def create_assignment(assignment: schemas.AssignmentCreate, db: Session = Depends(get_db)):
     db_assignment = models.Assignment(**assignment.dict(exclude_unset=True))
     db.add(db_assignment)

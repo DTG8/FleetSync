@@ -286,6 +286,41 @@ function App() {
     }
   };
 
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const max_size = 800;
+          if (width > height) {
+            if (width > max_size) {
+              height *= max_size / width;
+              width = max_size;
+            }
+          } else {
+            if (height > max_size) {
+              width *= max_size / height;
+              height = max_size;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+          }, 'image/jpeg', 0.8);
+        };
+      };
+    });
+  };
+
   const handleCreateDriver = async (e) => {
     e.preventDefault();
     clearMessages();
@@ -303,8 +338,9 @@ function App() {
       const driverId = editId || res.data.id;
       
       if (driverPhotoFile) {
+        const compressedFile = await compressImage(driverPhotoFile);
         const formData = new FormData();
-        formData.append("file", driverPhotoFile);
+        formData.append("file", compressedFile);
         await axios.post(`${API_BASE}/drivers/${driverId}/photo`, formData, {
           headers: { "Content-Type": "multipart/form-data" }
         });
@@ -338,7 +374,7 @@ function App() {
     e.preventDefault();
     clearMessages();
     try {
-      await axios.post(`${API_BASE}/assignments/`, assignmentForm);
+      await axios.post(`${API_BASE}/assignments`, assignmentForm);
       setSuccessMsg('Vehicle dispatched successfully!');
       setAssignmentForm({ vehicle_id: '', driver_id: '', task_description: '', dispatched_at: new Date().toISOString().slice(0, 16) });
       loadAllData();
