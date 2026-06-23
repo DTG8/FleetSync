@@ -6,10 +6,12 @@ const VehicleProfileDrawer = ({ vehicleId, onClose, apiBase }) => {
   const [profile, setProfile] = useState(null);
   const [accessories, setAccessories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('history');
 
   const fetchProfile = async () => {
     try {
+      setError(null);
       const [profRes, accRes] = await Promise.all([
         axios.get(`${apiBase}/profiles/vehicles/${vehicleId}`),
         axios.get(`${apiBase}/accessories/vehicle/${vehicleId}`)
@@ -18,6 +20,7 @@ const VehicleProfileDrawer = ({ vehicleId, onClose, apiBase }) => {
       setAccessories(accRes.data);
     } catch (err) {
       console.error("Failed to fetch vehicle profile", err);
+      setError(err.response?.data?.detail || err.message || "Failed to load vehicle profile");
     } finally {
       setLoading(false);
     }
@@ -30,7 +33,7 @@ const VehicleProfileDrawer = ({ vehicleId, onClose, apiBase }) => {
   const updateAccessoryStatus = async (id, newStatus) => {
     try {
       await axios.put(`${apiBase}/accessories/${id}`, { status: newStatus });
-      fetchProfile(); // Refresh to get history logs updated
+      fetchProfile();
     } catch (err) {
       console.error("Failed to update accessory", err);
     }
@@ -45,7 +48,25 @@ const VehicleProfileDrawer = ({ vehicleId, onClose, apiBase }) => {
     }
   };
 
-  if (loading || !profile) return null;
+  if (loading || error || !profile) {
+    return (
+      <div className="fixed inset-0 z-[100] flex justify-end bg-slate-950/50 backdrop-blur-sm">
+        <div className="w-full max-w-2xl bg-slate-50 dark:bg-slate-900 h-full shadow-2xl flex flex-col items-center justify-center border-l border-slate-200 dark:border-slate-800">
+          <button onClick={onClose} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+            <X size={24} />
+          </button>
+          {loading && <p className="text-slate-500 dark:text-slate-400 text-sm animate-pulse">Loading vehicle profile...</p>}
+          {error && (
+            <div className="text-center p-6">
+              <p className="text-rose-500 font-semibold text-sm mb-2">Error loading profile</p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs">{error}</p>
+              <p className="text-slate-400 dark:text-slate-500 text-xs mt-4">Make sure the backend migration has been run and the server restarted.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-end bg-slate-950/50 backdrop-blur-sm transition-opacity">
