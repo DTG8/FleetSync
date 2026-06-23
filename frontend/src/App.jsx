@@ -473,6 +473,16 @@ function App() {
     }
   };
 
+  const handleReturnAssignment = async (assignId) => {
+    if (!window.confirm('Mark this dispatch assignment as returned?')) return;
+    try {
+      await axios.put(`${API_BASE}/assignments/${assignId}`, { returned_at: new Date().toISOString() });
+      loadAllData();
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to return assignment.');
+    }
+  };
+
   // Find Leaderboard resource consumers
   const getLeaderboard = () => {
     let moneyPit = { plate_number: 'N/A', total_tco: 0, cost_per_km: 0 };
@@ -853,7 +863,7 @@ function App() {
                                   {assignment.returned_at ? (
                                     <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded-md">Returned {new Date(assignment.returned_at).toLocaleDateString()}</span>
                                   ) : (
-                                    <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 px-2 py-1 rounded-md font-semibold animate-pulse">Active</span>
+                                    <button onClick={() => handleReturnAssignment(assignment.id)} className="text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-500/20 dark:hover:bg-amber-500/30 dark:text-amber-400 px-2 py-1 rounded-md font-semibold animate-pulse transition-colors cursor-pointer border border-amber-200 dark:border-amber-500/30 shadow-sm">Return</button>
                                   )}
                                 </td>
                               </tr>
