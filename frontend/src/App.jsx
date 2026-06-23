@@ -37,7 +37,6 @@ import {
 import DriverProfileDrawer from './components/DriverProfileDrawer';
 import VehicleProfileDrawer from './components/VehicleProfileDrawer';
 
-
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -94,6 +93,11 @@ function App() {
   const [maintenanceForm, setMaintenanceForm] = useState({ vehicle_id: '', driver_id: '', issue_description: '', type: 'Routine Service', status: 'Pending', cost: '', logged_at: new Date().toISOString().split('T')[0], resolved_at: '' });
   const [paperForm, setPaperForm] = useState({ vehicle_id: '', document_type: 'Insurance', expiry_date: '' });
   const [miscForm, setMiscForm] = useState({ vehicle_id: '', driver_id: '', amount: '', description: '', entry_date: new Date().toISOString().split('T')[0], category: 'Toll' });
+
+  // Profile Drawer & Assignment State
+  const [selectedDriverId, setSelectedDriverId] = useState(null);
+  const [selectedVehicleId, setSelectedVehicleId] = useState(null);
+  const [assignmentForm, setAssignmentForm] = useState({ vehicle_id: '', driver_id: '', task_description: '', dispatched_at: new Date().toISOString().slice(0, 16) });
 
   // Theme Sync Effect
   useEffect(() => {
@@ -307,18 +311,17 @@ function App() {
     }
   };
 
-
   const handleCreateAssignment = async (e) => {
     e.preventDefault();
+    clearMessages();
     try {
       await axios.post(`${API_BASE}/assignments/`, assignmentForm);
-      setSuccessMsg("Vehicle dispatched successfully!");
-      setModalType(null);
-      fetchDashboardData();
-      fetchVehicles();
-      fetchDrivers();
+      setSuccessMsg('Vehicle dispatched successfully!');
+      setAssignmentForm({ vehicle_id: '', driver_id: '', task_description: '', dispatched_at: new Date().toISOString().slice(0, 16) });
+      loadAllData();
+      setTimeout(handleCloseModal, 1500);
     } catch (err) {
-      setErrorMsg(err.response?.data?.detail || "Failed to dispatch vehicle.");
+      setErrorMsg(err.response?.data?.detail || 'Failed to dispatch vehicle.');
     }
   };
 
@@ -327,7 +330,6 @@ function App() {
     clearMessages();
     try {
       const payload = { ...fuelForm };
-
       if (!payload.driver_id) delete payload.driver_id;
       if (editId) {
         await axios.put(`${API_BASE}/fuel-logs/${editId}`, payload);
@@ -757,7 +759,7 @@ function App() {
                         <p className="text-xs text-slate-500 dark:text-slate-400">Current active allocations. Make new allocations via forms.</p>
                       </div>
                       <button
-                        onClick={() => handleOpenModal('assignment')}
+                        onClick={() => handleOpenModal('allocation')}
                         className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1"
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -899,7 +901,7 @@ function App() {
                       </tr>
                     ) : (
                       vehicles.map((v) => (
-                        <tr key={v.id} className="hover:bg-slate-200/20 dark:hover:bg-slate-900/30">
+                        <tr key={v.id} className="hover:bg-slate-200/20 dark:hover:bg-slate-900/30 cursor-pointer" onClick={() => setSelectedVehicleId(v.id)}>
                           <td className="py-3.5 px-4 font-semibold text-indigo-600 dark:text-indigo-400">{v.plate_number}</td>
                           <td className="py-3.5 px-4 text-slate-800 dark:text-slate-200">{v.make} {v.model}</td>
                           <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">{v.year}</td>
@@ -928,8 +930,8 @@ function App() {
                           </td>
                           <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-xs">{v.purchase_date}</td>
                           <td className="py-3.5 px-4 text-right space-x-3">
-                            <button onClick={() => handleEditVehicle(v)} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold text-xs">Edit</button>
-                            <button onClick={() => handleDelete('vehicle', v.id)} className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-semibold text-xs">Delete</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleEditVehicle(v); }} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold text-xs">Edit</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDelete('vehicle', v.id); }} className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-semibold text-xs">Delete</button>
                           </td>
                         </tr>
                       ))
@@ -975,7 +977,7 @@ function App() {
                       </tr>
                     ) : (
                       drivers.map((d) => (
-                        <tr key={d.id} className="hover:bg-slate-200/20 dark:hover:bg-slate-900/30">
+                        <tr key={d.id} className="hover:bg-slate-200/20 dark:hover:bg-slate-900/30 cursor-pointer" onClick={() => setSelectedDriverId(d.id)}>
                           <td className="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-200">{d.full_name}</td>
                           <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-mono">{d.license_number}</td>
                           <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">{d.phone_number}</td>
@@ -989,8 +991,8 @@ function App() {
                             </span>
                           </td>
                           <td className="py-3.5 px-4 text-right space-x-3">
-                            <button onClick={() => handleEditDriver(d)} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold text-xs">Edit</button>
-                            <button onClick={() => handleDelete('driver', d.id)} className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-semibold text-xs">Delete</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleEditDriver(d); }} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold text-xs">Edit</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDelete('driver', d.id); }} className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-semibold text-xs">Delete</button>
                           </td>
                         </tr>
                       ))
@@ -1386,14 +1388,7 @@ function App() {
         </div>
       </main>
 
-      
-      {selectedDriverId && (
-        <DriverProfileDrawer driverId={selectedDriverId} onClose={() => setSelectedDriverId(null)} apiBase={API_BASE} />
-      )}
-      {selectedVehicleId && (
-        <VehicleProfileDrawer vehicleId={selectedVehicleId} onClose={() => setSelectedVehicleId(null)} apiBase={API_BASE} />
-      )}
-{/* POPUP MODAL & DRAWER SYSTEM */}
+      {/* POPUP MODAL & DRAWER SYSTEM */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
           <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 relative overflow-y-auto max-h-[90vh] text-slate-800 dark:text-slate-100 transition-colors duration-200">
@@ -1550,18 +1545,26 @@ function App() {
                     className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
-                  <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Photo URL</label>
-                    <input type="text" placeholder="https://..." value={driverForm.photo_url || ''} onChange={(e) => setDriverForm({ ...driverForm, photo_url: e.target.value })} className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Permanently Allocated Vehicle</label>
-                    <select value={driverForm.allocated_vehicle_id || ''} onChange={(e) => setDriverForm({ ...driverForm, allocated_vehicle_id: e.target.value })} className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500">
-                      <option value="">-- No Allocation --</option>
-                      {vehicles.map(v => <option key={v.id} value={v.id}>{v.plate_number} - {v.make}</option>)}
-                    </select>
-                  </div>
-
+                <div>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Photo URL</label>
+                  <input
+                    type="text" placeholder="https://..."
+                    value={driverForm.photo_url || ''}
+                    onChange={(e) => setDriverForm({ ...driverForm, photo_url: e.target.value })}
+                    className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Permanently Allocated Vehicle</label>
+                  <select
+                    value={driverForm.allocated_vehicle_id || ''}
+                    onChange={(e) => setDriverForm({ ...driverForm, allocated_vehicle_id: e.target.value || null })}
+                    className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="">-- No Allocation --</option>
+                    {vehicles.map(v => <option key={v.id} value={v.id}>{v.plate_number} - {v.make} {v.model}</option>)}
+                  </select>
+                </div>
                 <button
                   type="submit"
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition-all"
@@ -1571,8 +1574,7 @@ function App() {
               </form>
             )}
 
-            {/* FORM 3: ALLOCATION */}
-            
+            {/* FORM: DISPATCH VEHICLE (ASSIGNMENT) */}
             {modalType === 'assignment' && (
               <form onSubmit={handleCreateAssignment} className="space-y-4">
                 <div>
@@ -1601,10 +1603,11 @@ function App() {
                   <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Task Description</label>
                   <input type="text" placeholder="e.g. Delivery to Lagos Island" value={assignmentForm.task_description} onChange={(e) => setAssignmentForm({ ...assignmentForm, task_description: e.target.value })} className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white" />
                 </div>
-                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl mt-4">Dispatch Vehicle</button>
+                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl transition-all">Dispatch Vehicle</button>
               </form>
             )}
 
+            {/* FORM 3: ALLOCATION */}
             {modalType === 'allocation' && (
               <form onSubmit={handleCreateAllocation} className="space-y-4">
                 <div>
@@ -2002,6 +2005,13 @@ function App() {
 
           </div>
         </div>
+      )}
+
+      {selectedDriverId && (
+        <DriverProfileDrawer driverId={selectedDriverId} onClose={() => setSelectedDriverId(null)} apiBase={API_BASE} />
+      )}
+      {selectedVehicleId && (
+        <VehicleProfileDrawer vehicleId={selectedVehicleId} onClose={() => setSelectedVehicleId(null)} apiBase={API_BASE} />
       )}
 
     </div>
