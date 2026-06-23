@@ -1,6 +1,8 @@
 import datetime
 from database import SessionLocal, engine, Base
 import models
+import schemas
+import crud
 
 def seed_db():
     print("Clearing database tables...")
@@ -9,6 +11,14 @@ def seed_db():
 
     db = SessionLocal()
     try:
+        print("Seeding Admin User...")
+        crud.create_user(db, schemas.UserCreate(
+            email="admin@cedarviewng.com",
+            password="@Cedar2026",
+            full_name="Cedarview Admin",
+            is_active=1
+        ))
+
         print("Seeding Vehicles...")
         v1 = models.Vehicle(
             plate_number="TX-1234", make="Toyota", model="Camry", year=2024,

@@ -3,6 +3,28 @@ from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
 
+# --- AUTH & USER SCHEMAS ---
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+class UserBase(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+    is_active: int = 1
+
+class UserCreate(UserBase):
+    password: str
+
+class UserResponse(UserBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
 # --- VEHICLE PAPER SCHEMAS ---
 class VehiclePaperBase(BaseModel):
     vehicle_id: int

@@ -5,6 +5,30 @@ import schemas
 import datetime
 from fastapi import HTTPException, status
 
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+# --- USER CRUD ---
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
+
+def create_user(db: Session, user: schemas.UserCreate):
+    hashed_password = get_password_hash(user.password)
+    db_user = models.User(
+        email=user.email,
+        hashed_password=hashed_password,
+        full_name=user.full_name,
+        is_active=user.is_active
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
 # --- VEHICLE CRUD ---
 def get_vehicle(db: Session, vehicle_id: int):
     return db.query(models.Vehicle).filter(models.Vehicle.id == vehicle_id).first()

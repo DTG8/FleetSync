@@ -3,3 +3,5 @@ uvicorn
 sqlalchemy
 pydantic>=2.10
 python-multipart
+passlib[bcrypt]
+PyJWT

@@ -1,10 +1,11 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine
-from routers import vehicles, drivers, allocations, fuel_logs, maintenance_logs, analytics, compliance, financials, assignments, accessories, profiles
+from routers import vehicles, drivers, allocations, fuel_logs, maintenance_logs, analytics, compliance, financials, assignments, accessories, profiles, auth
+from routers.auth import get_current_user
 
 # Create tables
 models.Base.metadata.create_all(bind=engine)
@@ -29,18 +30,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(vehicles.router)
-app.include_router(drivers.router)
-app.include_router(allocations.router)
-app.include_router(fuel_logs.router)
-app.include_router(maintenance_logs.router)
-app.include_router(analytics.router)
-app.include_router(compliance.router)
-app.include_router(financials.router)
-app.include_router(assignments.router)
-app.include_router(accessories.router)
-app.include_router(profiles.router)
+# Include auth router (public)
+app.include_router(auth.router)
+
+# Include protected routers
+protected = [Depends(get_current_user)]
+app.include_router(vehicles.router, dependencies=protected)
+app.include_router(drivers.router, dependencies=protected)
+app.include_router(allocations.router, dependencies=protected)
+app.include_router(fuel_logs.router, dependencies=protected)
+app.include_router(maintenance_logs.router, dependencies=protected)
+app.include_router(analytics.router, dependencies=protected)
+app.include_router(compliance.router, dependencies=protected)
+app.include_router(financials.router, dependencies=protected)
+app.include_router(assignments.router, dependencies=protected)
+app.include_router(accessories.router, dependencies=protected)
+app.include_router(profiles.router, dependencies=protected)
 
 @app.get("/")
 def read_root():

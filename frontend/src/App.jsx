@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import DriverProfileDrawer from './components/DriverProfileDrawer';
 import VehicleProfileDrawer from './components/VehicleProfileDrawer';
+import Login from './components/Login';
 
 // Register Chart.js components
 ChartJS.register(
@@ -52,9 +53,33 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
   : '/api/v1'; // Goes through nginx reverse proxy on the server
 
 function App() {
+  const [token, setToken] = useState(() => localStorage.getItem('fleetToken') || null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
   const [financialPeriod, setFinancialPeriod] = useState('weekly');
+
+  useEffect(() => {
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+    }
+
+    const interceptor = axios.interceptors.response.use(
+      response => response,
+      error => {
+        if (error.response && error.response.status === 401) {
+          setToken(null);
+          localStorage.removeItem('fleetToken');
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, [token]);
 
   const [metrics, setMetrics] = useState({
     total_fleet: 0,
@@ -141,10 +166,21 @@ function App() {
     fetchSafe(`${API_BASE}/analytics/filling-stations?period=${financialPeriod}`, setFillingStationStats);
   };
 
-  // Trigger data load on mount and when financialPeriod changes
+  const handleLogout = () => {
+    setToken(null);
+    localStorage.removeItem('fleetToken');
+    delete axios.defaults.headers.common['Authorization'];
+  };
+
   useEffect(() => {
-    loadAllData();
-  }, [financialPeriod]);
+    if (token) {
+      loadAllData();
+    }
+  }, [token, financialPeriod]);
+
+  if (!token) {
+    return <Login setToken={setToken} />;
+  }
 
   // Refresh every 30s
   useEffect(() => {
@@ -633,6 +669,15 @@ function App() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white capitalize">{activeTab}</h1>
           
           <div className="flex items-center space-x-3">
+            {/* Logout Button */}
+            <button 
+              onClick={handleLogout}
+              className="p-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors shadow-sm border border-rose-100 dark:border-rose-500/20"
+              title="Sign Out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+
             {/* Theme Toggle Button */}
             <button 
               onClick={loadAllData}
