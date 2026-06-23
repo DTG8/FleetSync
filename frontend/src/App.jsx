@@ -103,42 +103,32 @@ function App() {
   }, [theme]);
 
   // Load Data
-  const loadAllData = async () => {
-    try {
-      const [
-        resMetrics, resVehicles, resDrivers, resAllocations, 
-        resExpiring, resRecurrent, resWeekly, resFuelLogs, 
-        resMaintLogs, resMiscLogs, resFinReport, resStationStats
-      ] = await Promise.all([
-        axios.get(`${API_BASE}/analytics/dashboard`),
-        axios.get(`${API_BASE}/vehicles`),
-        axios.get(`${API_BASE}/drivers`),
-        axios.get(`${API_BASE}/allocations`),
-        axios.get(`${API_BASE}/compliance/expiring-papers`),
-        axios.get(`${API_BASE}/analytics/maintenance-recurrent`),
-        axios.get(`${API_BASE}/analytics/weekly-fuel`),
-        axios.get(`${API_BASE}/fuel-logs`),
-        axios.get(`${API_BASE}/maintenance-logs`),
-        axios.get(`${API_BASE}/miscellaneous-expenses`),
-        axios.get(`${API_BASE}/analytics/financial-report?period=${financialPeriod}`),
-        axios.get(`${API_BASE}/analytics/filling-stations?period=${financialPeriod}`)
-      ]);
+    const loadAllData = async () => {
+    // Helper to safely fetch and set state
+    const fetchSafe = async (url, setter, defaultVal) => {
+      try {
+        const res = await axios.get(url);
+        setter(res.data);
+      } catch (err) {
+        console.error(`Error fetching ${url}:`, err);
+        // Don't overwrite existing data on failure, or use defaultVal if we want
+      }
+    };
 
-      setMetrics(resMetrics.data);
-      setVehicles(resVehicles.data);
-      setDrivers(resDrivers.data);
-      setAllocations(resAllocations.data);
-      setExpiringPapers(resExpiring.data);
-      setRecurrentMaintenance(resRecurrent.data);
-      setWeeklyFuel(resWeekly.data);
-      setFuelLogs(resFuelLogs.data);
-      setMaintenanceLogs(resMaintLogs.data);
-      setMiscExpenses(resMiscLogs.data);
-      setFinancialReport(resFinReport.data);
-      setFillingStationStats(resStationStats.data);
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-    }
+    // Fetch all independently to prevent one failure from breaking the whole dashboard
+    // and to avoid strictly enforcing Promise.all which fails fast.
+    fetchSafe(`${API_BASE}/analytics/dashboard`, setMetrics);
+    fetchSafe(`${API_BASE}/vehicles`, setVehicles);
+    fetchSafe(`${API_BASE}/drivers`, setDrivers);
+    fetchSafe(`${API_BASE}/allocations`, setAllocations);
+    fetchSafe(`${API_BASE}/compliance/expiring-papers`, setExpiringPapers);
+    fetchSafe(`${API_BASE}/analytics/maintenance-recurrent`, setRecurrentMaintenance);
+    fetchSafe(`${API_BASE}/analytics/weekly-fuel`, setWeeklyFuel);
+    fetchSafe(`${API_BASE}/fuel-logs`, setFuelLogs);
+    fetchSafe(`${API_BASE}/maintenance-logs`, setMaintenanceLogs);
+    fetchSafe(`${API_BASE}/miscellaneous-expenses`, setMiscExpenses);
+    fetchSafe(`${API_BASE}/analytics/financial-report?period=${financialPeriod}`, setFinancialReport);
+    fetchSafe(`${API_BASE}/analytics/filling-stations?period=${financialPeriod}`, setFillingStationStats);
   };
 
   // Trigger data load on mount and when financialPeriod changes
@@ -554,6 +544,13 @@ function App() {
           
           <div className="flex items-center space-x-3">
             {/* Theme Toggle Button */}
+            <button 
+              onClick={loadAllData}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white p-2.5 rounded-xl transition-all shadow-sm hover:shadow-md mr-2"
+              title="Refresh Data"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </button>
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all border border-slate-300 dark:border-slate-700"
@@ -799,6 +796,7 @@ function App() {
                       ) : (
                         expiringPapers.map((paper) => {
                           const isExpired = paper.status === 'Expired';
+                        const isValid = paper.status === 'Valid';
                           return (
                             <div
                               key={paper.id}
@@ -817,7 +815,7 @@ function App() {
                               </div>
                               <div className="text-right">
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                  isExpired ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300' : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                                  isValid ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : isExpired ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300' : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
                                 }`}>
                                   {paper.status}
                                 </span>
@@ -1332,6 +1330,7 @@ function App() {
                     ) : (
                       expiringPapers.map((paper) => {
                         const isExpired = paper.status === 'Expired';
+                        const isValid = paper.status === 'Valid';
                         return (
                           <tr key={paper.id} className="hover:bg-slate-200/20 dark:hover:bg-slate-900/30">
                             <td className="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-200">{paper.plate_number}</td>
@@ -1340,7 +1339,7 @@ function App() {
                             <td className="py-3.5 px-4">
                               <div className="flex items-center space-x-2">
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                  isExpired ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300' : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                                  isValid ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : isExpired ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300' : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
                                 }`}>
                                   {paper.status}
                                 </span>
