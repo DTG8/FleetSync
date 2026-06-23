@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import models, schemas
 from database import get_db
+import datetime
 
 router = APIRouter(
     prefix="/profiles",
@@ -26,12 +27,28 @@ def get_driver_profile(driver_id: int, db: Session = Depends(get_db)):
     for a in assignments:
         v = db.query(models.Vehicle).filter(models.Vehicle.id == a.vehicle_id).first()
         assignments_data.append({
-            "id": a.id,
+            "id": f"assign-{a.id}",
+            "type": "Assignment",
             "vehicle_plate": v.plate_number if v else "Unknown",
             "task_description": a.task_description,
             "dispatched_at": a.dispatched_at,
             "returned_at": a.returned_at
         })
+        
+    allocations = db.query(models.Allocation).filter(models.Allocation.driver_id == driver_id).all()
+    for al in allocations:
+        v = db.query(models.Vehicle).filter(models.Vehicle.id == al.vehicle_id).first()
+        assignments_data.append({
+            "id": f"alloc-{al.id}",
+            "type": "Allocation",
+            "vehicle_plate": v.plate_number if v else "Unknown",
+            "task_description": "Permanent Allocation",
+            "dispatched_at": al.allocated_at,
+            "returned_at": al.returned_at
+        })
+        
+    # Sort by dispatched_at descending
+    assignments_data.sort(key=lambda x: x["dispatched_at"] or datetime.datetime.min, reverse=True)
         
     # Get expenses/costs
     fuel_logs = db.query(models.FuelLog).filter(models.FuelLog.driver_id == driver_id).all()

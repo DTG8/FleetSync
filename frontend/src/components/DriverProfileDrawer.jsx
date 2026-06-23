@@ -118,6 +118,7 @@ const DriverProfileDrawer = ({ driverId, onClose, apiBase }) => {
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
                   <tr>
+                    <th className="p-3 font-semibold text-slate-600 dark:text-slate-400">Type</th>
                     <th className="p-3 font-semibold text-slate-600 dark:text-slate-400">Vehicle</th>
                     <th className="p-3 font-semibold text-slate-600 dark:text-slate-400">Task</th>
                     <th className="p-3 font-semibold text-slate-600 dark:text-slate-400">Dispatched</th>
@@ -129,6 +130,11 @@ const DriverProfileDrawer = ({ driverId, onClose, apiBase }) => {
                     <tr><td colSpan="4" className="p-6 text-center text-slate-500 italic">No dispatch history found.</td></tr>
                   ) : profile.assignments.map(a => (
                     <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <td className="p-3">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${a.type === 'Allocation' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>
+                          {a.type || 'Assignment'}
+                        </span>
+                      </td>
                       <td className="p-3 font-medium text-slate-900 dark:text-slate-200">{a.vehicle_plate}</td>
                       <td className="p-3 text-slate-600 dark:text-slate-400">{a.task_description || '-'}</td>
                       <td className="p-3 text-slate-500 dark:text-slate-400">{new Date(a.dispatched_at).toLocaleString()}</td>

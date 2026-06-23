@@ -75,7 +75,7 @@ function App() {
   const [fuelLogs, setFuelLogs] = useState([]);
   const [maintenanceLogs, setMaintenanceLogs] = useState([]);
   const [miscExpenses, setMiscExpenses] = useState([]);
-  const [financialReport, setFinancialReport] = useState({ vehicles: [], totals: {} });
+  const [financialReport, setFinancialReport] = useState({ vehicles: [], drivers: [], period: 'weekly' });
   const [fillingStationStats, setFillingStationStats] = useState([]);
   const [assignments, setAssignments] = useState([]);
 
@@ -758,7 +758,7 @@ function App() {
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Driver Dispatch History</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Temporary vehicle assignments for specific tasks.</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Vehicle assignments for specific daily movements or logistics tasks.</p>
                       </div>
                       <button
                         onClick={() => handleOpenModal('assignment')}
@@ -1594,8 +1594,8 @@ function App() {
             {modalType === 'assignment' && (
               <form onSubmit={handleCreateAssignment} className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Dispatch Vehicle (Temporary Assignment)</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Assign a vehicle to a driver for a specific task.</p>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Dispatch Vehicle (Assignment)</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Assign a vehicle to a driver for a specific task or logistics route.</p>
                 </div>
                 <div>
                   <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Select Vehicle *</label>
