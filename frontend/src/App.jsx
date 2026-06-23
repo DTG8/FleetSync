@@ -1316,6 +1316,7 @@ function App() {
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold">
                       <th className="py-3 px-4">Vehicle Plate</th>
+                      <th className="py-3 px-4">Make & Model</th>
                       <th className="py-3 px-4">Document Type</th>
                       <th className="py-3 px-4">Expiry Date</th>
                       <th className="py-3 px-4">Status & Countdown</th>
@@ -1334,6 +1335,7 @@ function App() {
                         return (
                           <tr key={paper.id} className="hover:bg-slate-200/20 dark:hover:bg-slate-900/30">
                             <td className="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-200">{paper.plate_number}</td>
+                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 font-medium text-xs">{paper.make_model || 'N/A'}</td>
                             <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-semibold text-xs">{paper.document_type}</td>
                             <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-xs">{paper.expiry_date}</td>
                             <td className="py-3.5 px-4">
