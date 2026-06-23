@@ -60,7 +60,7 @@ const DriverProfileDrawer = ({ driverId, onClose, apiBase }) => {
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
           <div className="flex items-center space-x-4">
             {profile.photo_url ? (
-              <img src={profile.photo_url} alt={profile.full_name} className="w-16 h-16 rounded-full object-cover border-2 border-indigo-500" />
+              <img src={profile.photo_url.startsWith('http') ? profile.photo_url : `http://10.39.98.15:8080${profile.photo_url}`} alt={profile.full_name} className="w-16 h-16 rounded-full object-cover border-2 border-indigo-500" />
             ) : (
               <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border-2 border-indigo-500">
                 <User size={32} />

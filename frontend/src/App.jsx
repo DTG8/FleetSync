@@ -87,8 +87,9 @@ function App() {
   const [successMsg, setSuccessMsg] = useState('');
 
   // Form Field States
-  const [vehicleForm, setVehicleForm] = useState({ plate_number: '', make: '', model: '', year: new Date().getFullYear(), status: 'Active', current_odometer: 0, current_fuel_level_percent: 100, purchase_date: '' });
-  const [driverForm, setDriverForm] = useState({ full_name: '', license_number: '', phone_number: '', status: 'Available' });
+  const [vehicleForm, setVehicleForm] = useState({ plate_number: '', make: '', model: '', year: 2024, status: 'Active', current_odometer: 0, current_fuel_level_percent: 100, purchase_date: new Date().toISOString().split('T')[0] });
+  const [driverForm, setDriverForm] = useState({ full_name: '', license_number: '', phone_number: '', photo_url: '', status: 'Available', allocated_vehicle_id: null });
+  const [driverPhotoFile, setDriverPhotoFile] = useState(null);
   const [allocationForm, setAllocationForm] = useState({ vehicle_id: '', driver_id: '' });
   const [fuelForm, setFuelForm] = useState({ vehicle_id: '', driver_id: '', entry_date: new Date().toISOString().split('T')[0], odometer_reading: '', fuel_added_liters: '', cost: '', fuel_gauge_after_fill_percent: '', filling_station: '' });
   const [maintenanceForm, setMaintenanceForm] = useState({ vehicle_id: '', driver_id: '', issue_description: '', type: 'Routine Service', status: 'Pending', cost: '', logged_at: new Date().toISOString().split('T')[0], resolved_at: '' });
@@ -168,6 +169,7 @@ function App() {
   const handleCloseModal = () => {
     setShowModal(false);
     clearMessages();
+    setDriverPhotoFile(null);
   };
 
 
@@ -256,8 +258,11 @@ function App() {
       full_name: d.full_name,
       license_number: d.license_number,
       phone_number: d.phone_number,
-      status: d.status
+      photo_url: d.photo_url || '',
+      status: d.status,
+      allocated_vehicle_id: d.allocated_vehicle_id || null
     });
+    setDriverPhotoFile(null);
     setEditId(d.id);
     handleOpenModal('driver', true);
   };
@@ -285,13 +290,29 @@ function App() {
     e.preventDefault();
     clearMessages();
     try {
+      const payload = { ...driverForm };
+      if (!payload.allocated_vehicle_id) delete payload.allocated_vehicle_id;
+
+      let res;
       if (editId) {
-        await axios.put(`${API_BASE}/drivers/${editId}`, driverForm);
+        res = await axios.put(`${API_BASE}/drivers/${editId}`, payload);
       } else {
-        await axios.post(`${API_BASE}/drivers`, driverForm);
+        res = await axios.post(`${API_BASE}/drivers`, payload);
       }
+
+      const driverId = editId || res.data.id;
+      
+      if (driverPhotoFile) {
+        const formData = new FormData();
+        formData.append("file", driverPhotoFile);
+        await axios.post(`${API_BASE}/drivers/${driverId}/photo`, formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+      }
+
       setSuccessMsg(editId ? 'Driver updated successfully!' : 'Driver added successfully!');
-      setDriverForm({ full_name: '', license_number: '', phone_number: '', status: 'Available' });
+      setDriverForm({ full_name: '', license_number: '', phone_number: '', photo_url: '', status: 'Available', allocated_vehicle_id: null });
+      setDriverPhotoFile(null);
       loadAllData();
       setTimeout(handleCloseModal, 1500);
     } catch (err) {
@@ -1549,13 +1570,22 @@ function App() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Photo URL</label>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Driver Photo</label>
                   <input
-                    type="text" placeholder="https://..."
-                    value={driverForm.photo_url || ''}
-                    onChange={(e) => setDriverForm({ ...driverForm, photo_url: e.target.value })}
-                    className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                    type="file" accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setDriverPhotoFile(e.target.files[0]);
+                      }
+                    }}
+                    className="w-full bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                   />
+                  {driverForm.photo_url && !driverPhotoFile && (
+                     <p className="text-[10px] text-slate-500 mt-1">Current photo: {driverForm.photo_url.split('/').pop()}</p>
+                  )}
+                  {driverPhotoFile && (
+                     <p className="text-[10px] text-indigo-500 mt-1">Selected: {driverPhotoFile.name}</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs text-slate-500 dark:text-slate-400 block font-semibold mb-1">Status</label>

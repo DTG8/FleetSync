@@ -1,4 +1,6 @@
+import os
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine
@@ -12,6 +14,11 @@ app = FastAPI(
     description="Backend API for managing vehicles, drivers, fuel logs, maintenance, allocations, and compliance documents.",
     version="1.1.0"
 )
+
+# Mount the static uploads directory
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # CORS configuration
 app.add_middleware(
