@@ -118,7 +118,7 @@ def get_maintenance_recurrent(db: Session = Depends(get_db)):
 
 @router.get("/filling-stations", response_model=List[schemas.FillingStationSpendItem])
 def get_filling_stations_analytics(
-    period: str = Query("weekly", regex="^(weekly|monthly|quarterly|yearly)$"),
+    period: str = Query("weekly", pattern="^(weekly|monthly|quarterly|yearly)$"),
     db: Session = Depends(get_db)
 ):
     return crud.get_filling_station_analytics(db=db, period=period)

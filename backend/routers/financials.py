@@ -11,7 +11,7 @@ router = APIRouter(
 
 @router.get("/analytics/financial-report", response_model=schemas.FinancialReportResponse)
 def get_financial_report(
-    period: str = Query("weekly", regex="^(weekly|monthly|quarterly|yearly)$"),
+    period: str = Query("weekly", pattern="^(weekly|monthly|quarterly|yearly)$"),
     db: Session = Depends(get_db)
 ):
     return crud.get_financial_report(db=db, period=period)
