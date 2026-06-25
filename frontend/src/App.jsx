@@ -640,19 +640,10 @@ function App() {
   }
 
   return (
-    <div 
-      className="flex h-screen text-slate-800 dark:text-slate-100 overflow-hidden font-sans transition-colors duration-200 bg-cover bg-center"
-      style={{ 
-        backgroundImage: theme === 'dark' 
-          ? "url('https://images.unsplash.com/photo-1519003722824-194d4455a60c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')" 
-          : "url('https://images.unsplash.com/photo-1557683316-973673baf926?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')", 
-        backgroundBlendMode: theme === 'dark' ? 'overlay' : 'soft-light', 
-        backgroundColor: theme === 'dark' ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.85)' 
-      }}
-    >
+    <div className="flex h-screen bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 overflow-hidden font-sans transition-colors duration-200">
       
       {/* SIDEBAR */}
-      <aside className="w-64 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-r border-slate-200/50 dark:border-slate-800/50 flex flex-col justify-between shrink-0 transition-colors duration-200 z-20 shadow-[4px_0_24px_-4px_rgba(0,0,0,0.05)]">
+      <aside className="w-64 bg-white dark:bg-slate-900/80 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between shrink-0 transition-colors duration-200">
         <div>
           <div className="p-6 flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -672,14 +663,14 @@ function App() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm transition-all duration-300 relative group ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 ${
                     active 
-                      ? 'text-indigo-700 dark:text-indigo-300 font-bold bg-white/60 dark:bg-slate-800/60 shadow-[0_4px_20px_-4px_rgba(79,70,229,0.15)] border border-white/50 dark:border-slate-700/50 backdrop-blur-md' 
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-white/30 dark:hover:bg-slate-800/30 hover:text-slate-800 dark:hover:text-slate-200 font-medium'
+                      ? 'text-indigo-600 dark:text-indigo-400 font-bold bg-transparent' 
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 transition-transform duration-300 z-10 ${active ? 'text-indigo-600 dark:text-indigo-400 scale-110 drop-shadow-sm' : 'text-slate-400 dark:text-slate-500 group-hover:scale-105'}`} />
-                  <span className="z-10">{item.name}</span>
+                  <Icon className={`w-5 h-5 transition-transform ${active ? 'text-indigo-600 dark:text-indigo-400 scale-110 drop-shadow-sm' : 'text-slate-400 dark:text-slate-400'}`} />
+                  <span>{item.name}</span>
                 </button>
               );
             })}
@@ -695,8 +686,8 @@ function App() {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col overflow-y-auto bg-transparent relative">
-        <header className="h-16 border-b border-slate-200/50 dark:border-slate-800/50 px-8 flex items-center justify-between shrink-0 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl transition-colors duration-200 sticky top-0 z-30">
+      <main className="flex-1 flex flex-col overflow-y-auto bg-slate-50/40 dark:bg-slate-950/40 relative">
+        <header className="h-16 border-b border-slate-200 dark:border-slate-800/60 px-8 flex items-center justify-between shrink-0 bg-white/70 dark:bg-slate-900/30 backdrop-blur-md transition-colors duration-200">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white capitalize w-48">{activeTab}</h1>
           
           <div className="flex-1 max-w-md mx-4 relative hidden md:block">
