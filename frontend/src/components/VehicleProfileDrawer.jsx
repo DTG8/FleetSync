@@ -138,15 +138,43 @@ const VehicleProfileDrawer = ({ vehicleId, onClose, apiBase }) => {
                       <tr>
                         <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Document Type</th>
                         <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Expiry Date</th>
+                        <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                      {documents.map((doc) => (
-                        <tr key={doc.id}>
-                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">{doc.document_type}</td>
-                          <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{doc.expiry_date}</td>
-                        </tr>
-                      ))}
+                      {documents.map((doc) => {
+                        const today = new Date();
+                        const expiry = new Date(doc.expiry_date);
+                        const diffTime = expiry - today;
+                        const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        let statusStr = "Valid";
+                        let statusColor = "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300";
+                        if (daysRemaining < 0) {
+                          statusStr = "Expired";
+                          statusColor = "bg-rose-500/20 text-rose-700 dark:text-rose-300";
+                        } else if (daysRemaining < 30) {
+                          statusStr = "Expiring Soon";
+                          statusColor = "bg-amber-500/20 text-amber-700 dark:text-amber-300";
+                        }
+
+                        return (
+                          <tr key={doc.id}>
+                            <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">{doc.document_type}</td>
+                            <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{doc.expiry_date}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center space-x-2">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColor}`}>
+                                  {statusStr}
+                                </span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                  ({statusStr === 'Expired' ? `${Math.abs(daysRemaining)} days overdue` : `${daysRemaining} days remaining`})
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
