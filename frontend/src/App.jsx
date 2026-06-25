@@ -79,10 +79,21 @@ function App() {
   }, []);
 
   const lowerQuery = searchQuery.toLowerCase().trim();
-  const searchResults = lowerQuery ? [
-    ...vehicles.filter(v => (v.plate_number || '').toLowerCase().includes(lowerQuery) || (v.make || '').toLowerCase().includes(lowerQuery)).map(v => ({ type: 'Vehicle', id: v.id, title: v.plate_number, subtitle: `${v.make} ${v.model}` })),
-    ...drivers.filter(d => (d.full_name || '').toLowerCase().includes(lowerQuery) || (d.license_number || '').toLowerCase().includes(lowerQuery)).map(d => ({ type: 'Driver', id: d.id, title: d.full_name, subtitle: d.license_number }))
-  ].slice(0, 8) : [];
+  const searchResults = (() => {
+    if (!lowerQuery) return [];
+    try {
+      const vResults = Array.isArray(vehicles) ? vehicles
+        .filter(v => (v.plate_number || '').toLowerCase().includes(lowerQuery) || (v.make || '').toLowerCase().includes(lowerQuery))
+        .map(v => ({ type: 'Vehicle', id: v.id, title: v.plate_number, subtitle: `${v.make} ${v.model}` })) : [];
+      const dResults = Array.isArray(drivers) ? drivers
+        .filter(d => (d.full_name || '').toLowerCase().includes(lowerQuery) || (d.license_number || '').toLowerCase().includes(lowerQuery))
+        .map(d => ({ type: 'Driver', id: d.id, title: d.full_name, subtitle: d.license_number })) : [];
+      return [...vResults, ...dResults].slice(0, 8);
+    } catch (err) {
+      console.error('Search error:', err);
+      return [];
+    }
+  })();
 
   const handleExportCSV = (data, filename) => {
     if (!data || data.length === 0) return;
