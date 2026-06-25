@@ -720,7 +720,7 @@ function App() {
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col overflow-y-auto bg-slate-50/40 dark:bg-slate-950/40 relative">
-        <header className="h-16 border-b border-slate-200 dark:border-slate-800/60 px-8 flex items-center justify-between shrink-0 bg-white/70 dark:bg-slate-900/30 backdrop-blur-md transition-colors duration-200">
+        <header className="relative z-50 h-16 border-b border-slate-200 dark:border-slate-800/60 px-8 flex items-center justify-between shrink-0 bg-white/70 dark:bg-slate-900/30 backdrop-blur-md transition-colors duration-200">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white capitalize w-48">{activeTab}</h1>
           
           <div className="flex-1 max-w-md mx-4 relative hidden md:block">
