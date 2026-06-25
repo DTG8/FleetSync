@@ -605,8 +605,8 @@ function App() {
   const navItems = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
     { id: 'vehicles', name: 'Vehicles', icon: Car },
-    { id: 'drivers', name: 'Drivers', icon: Users },
-    { id: 'financials', name: 'Financials', icon: Receipt },
+    { id: 'drivers', name: 'Drivers', icon: UserCheck },
+    { id: 'financials', name: 'Financials', icon: Coins },
     { id: 'fuel', name: 'Fuel Logs', icon: Fuel },
     { id: 'maintenance', name: 'Maintenance', icon: Wrench },
     { id: 'compliance', name: 'Compliance', icon: FileText }
