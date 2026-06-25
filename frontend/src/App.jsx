@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import {
   Chart as ChartJS,
@@ -65,11 +65,23 @@ function App() {
   // Notification State
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef(null);
+
+  // Close notification dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const lowerQuery = searchQuery.toLowerCase().trim();
   const searchResults = lowerQuery ? [
-    ...vehicles.filter(v => v.plate_number.toLowerCase().includes(lowerQuery) || v.make.toLowerCase().includes(lowerQuery)).map(v => ({ type: 'Vehicle', id: v.id, title: v.plate_number, subtitle: `${v.make} ${v.model}` })),
-    ...drivers.filter(d => d.full_name.toLowerCase().includes(lowerQuery) || d.license_number.toLowerCase().includes(lowerQuery)).map(d => ({ type: 'Driver', id: d.id, title: d.full_name, subtitle: d.license_number }))
+    ...vehicles.filter(v => (v.plate_number || '').toLowerCase().includes(lowerQuery) || (v.make || '').toLowerCase().includes(lowerQuery)).map(v => ({ type: 'Vehicle', id: v.id, title: v.plate_number, subtitle: `${v.make} ${v.model}` })),
+    ...drivers.filter(d => (d.full_name || '').toLowerCase().includes(lowerQuery) || (d.license_number || '').toLowerCase().includes(lowerQuery)).map(d => ({ type: 'Driver', id: d.id, title: d.full_name, subtitle: d.license_number }))
   ].slice(0, 8) : [];
 
   const handleExportCSV = (data, filename) => {
@@ -766,7 +778,7 @@ function App() {
 
           <div className="flex items-center space-x-3">
             {/* Notifications Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={notifRef}>
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm"
