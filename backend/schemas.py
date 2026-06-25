@@ -327,3 +327,16 @@ class VehicleAccessoryHistoryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class NotificationBase(BaseModel):
+    message: str
+    type: str = "Info"
+
+class NotificationResponse(NotificationBase):
+    id: int
+    is_read: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+

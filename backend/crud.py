@@ -616,3 +616,23 @@ def get_filling_station_analytics(db: Session, period: str):
         )
     return spend_items
 
+
+# --- NOTIFICATIONS ---
+def get_unread_notifications(db: Session, limit: int = 50):
+    return db.query(models.Notification).filter(models.Notification.is_read == 0).order_by(models.Notification.created_at.desc()).limit(limit).all()
+
+def mark_notification_as_read(db: Session, notification_id: int):
+    db_notification = db.query(models.Notification).filter(models.Notification.id == notification_id).first()
+    if db_notification:
+        db_notification.is_read = 1
+        db.commit()
+        db.refresh(db_notification)
+    return db_notification
+
+def create_notification(db: Session, message: str, type: str = "Info"):
+    db_notification = models.Notification(message=message, type=type)
+    db.add(db_notification)
+    db.commit()
+    db.refresh(db_notification)
+    return db_notification
+

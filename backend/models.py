@@ -171,3 +171,13 @@ class VehicleAccessoryHistory(Base):
     updated_at = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
 
     vehicle = relationship("Vehicle")
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    message = Column(String, nullable=False)
+    type = Column(String, nullable=False, default="Info")  # Critical, Warning, Info
+    is_read = Column(Integer, default=0)
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+

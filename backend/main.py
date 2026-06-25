@@ -4,16 +4,28 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine
-from routers import vehicles, drivers, allocations, fuel_logs, maintenance_logs, analytics, compliance, financials, assignments, accessories, profiles, auth
+from routers import vehicles, drivers, allocations, fuel_logs, maintenance_logs, analytics, compliance, financials, assignments, accessories, profiles, auth, notifications
 from routers.auth import get_current_user
+from jobs.scheduler import run_scheduler
+import asyncio
+from contextlib import asynccontextmanager
 
 # Create tables
 models.Base.metadata.create_all(bind=engine)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start the background scheduler
+    task = asyncio.create_task(run_scheduler())
+    yield
+    # Cancel the task when the app shuts down
+    task.cancel()
+
 app = FastAPI(
     title="Fleet Management System API",
     description="Backend API for managing vehicles, drivers, fuel logs, maintenance, allocations, and compliance documents.",
-    version="1.1.0"
+    version="1.1.0",
+    lifespan=lifespan
 )
 
 # Mount the static uploads directory
@@ -46,6 +58,7 @@ app.include_router(financials.router, dependencies=protected)
 app.include_router(assignments.router, dependencies=protected)
 app.include_router(accessories.router, dependencies=protected)
 app.include_router(profiles.router, dependencies=protected)
+app.include_router(notifications.router, dependencies=protected)
 
 @app.get("/")
 def read_root():
