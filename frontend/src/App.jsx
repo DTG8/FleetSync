@@ -52,7 +52,7 @@ ChartJS.register(
 );
 
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '10.39.98.15'
-  ? `http://${window.location.hostname}:8001`
+  ? `http://${window.location.hostname}:8000`
   : '/api/v1'; // Goes through nginx reverse proxy on the server
 
 function App() {
