@@ -58,6 +58,10 @@ def create_vehicle_paper(paper: schemas.VehiclePaperCreate, db: Session = Depend
 def update_vehicle_paper(paper_id: int, paper_update: schemas.VehiclePaperUpdate, db: Session = Depends(get_db)):
     return crud.update_vehicle_paper(db=db, paper_id=paper_id, paper_update=paper_update)
 
+@router.get("/papers/vehicle/{vehicle_id}", response_model=List[schemas.VehiclePaperResponse])
+def get_vehicle_papers_by_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
+    return db.query(models.VehiclePaper).filter(models.VehiclePaper.vehicle_id == vehicle_id).all()
+
 @router.delete("/papers/{paper_id}", response_model=schemas.VehiclePaperResponse)
 def delete_vehicle_paper(paper_id: int, db: Session = Depends(get_db)):
     return crud.delete_vehicle_paper(db=db, paper_id=paper_id)

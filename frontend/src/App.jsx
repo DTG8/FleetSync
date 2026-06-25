@@ -178,10 +178,6 @@ function App() {
     }
   }, [token, financialPeriod]);
 
-  if (!token) {
-    return <Login setToken={setToken} />;
-  }
-
   // Refresh every 30s
   useEffect(() => {
     const interval = setInterval(loadAllData, 30000);
@@ -606,16 +602,19 @@ function App() {
     }
   };
 
-  // Nav Items
   const navItems = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
     { id: 'vehicles', name: 'Vehicles', icon: Car },
-    { id: 'drivers', name: 'Drivers', icon: UserCheck },
-    { id: 'financials', name: 'Financials', icon: Coins },
+    { id: 'drivers', name: 'Drivers', icon: Users },
+    { id: 'financials', name: 'Financials', icon: Receipt },
     { id: 'fuel', name: 'Fuel Logs', icon: Fuel },
     { id: 'maintenance', name: 'Maintenance', icon: Wrench },
     { id: 'compliance', name: 'Compliance', icon: FileText }
   ];
+
+  if (!token) {
+    return <Login setToken={setToken} />;
+  }
 
   return (
     <div className="flex h-screen bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 overflow-hidden font-sans transition-colors duration-200">

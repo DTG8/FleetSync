@@ -5,6 +5,7 @@ import { X, Car, Clock, ShieldCheck, Settings, FileText, CheckCircle, AlertTrian
 const VehicleProfileDrawer = ({ vehicleId, onClose, apiBase }) => {
   const [profile, setProfile] = useState(null);
   const [accessories, setAccessories] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('history');
@@ -12,12 +13,14 @@ const VehicleProfileDrawer = ({ vehicleId, onClose, apiBase }) => {
   const fetchProfile = async () => {
     try {
       setError(null);
-      const [profRes, accRes] = await Promise.all([
+      const [profRes, accRes, docRes] = await Promise.all([
         axios.get(`${apiBase}/profiles/vehicles/${vehicleId}`),
-        axios.get(`${apiBase}/accessories/vehicle/${vehicleId}`)
+        axios.get(`${apiBase}/accessories/vehicle/${vehicleId}`),
+        axios.get(`${apiBase}/compliance/papers/vehicle/${vehicleId}`)
       ]);
       setProfile(profRes.data);
       setAccessories(accRes.data);
+      setDocuments(docRes.data);
     } catch (err) {
       console.error("Failed to fetch vehicle profile", err);
       setError(err.response?.data?.detail || err.message || "Failed to load vehicle profile");
@@ -108,7 +111,6 @@ const VehicleProfileDrawer = ({ vehicleId, onClose, apiBase }) => {
             </div>
           </div>
 
-          {/* Tabs */}
           <div className="flex space-x-6 mt-6 border-b border-slate-200 dark:border-slate-800">
             <button onClick={() => setActiveTab('history')} className={`pb-3 text-sm font-bold ${activeTab === 'history' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
               Full History Log
@@ -116,12 +118,42 @@ const VehicleProfileDrawer = ({ vehicleId, onClose, apiBase }) => {
             <button onClick={() => setActiveTab('accessories')} className={`pb-3 text-sm font-bold ${activeTab === 'accessories' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
               Accessories Checklist
             </button>
+            <button onClick={() => setActiveTab('documents')} className={`pb-3 text-sm font-bold ${activeTab === 'documents' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+              Documents
+            </button>
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-900">
           
+          {activeTab === 'documents' && (
+            <div className="space-y-4">
+              {documents.length === 0 ? (
+                <div className="text-center py-12 text-slate-500 italic">No documents logged for this vehicle.</div>
+              ) : (
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm">
+                    <thead className="bg-slate-50 dark:bg-slate-900/50">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Document Type</th>
+                        <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Expiry Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                      {documents.map((doc) => (
+                        <tr key={doc.id}>
+                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">{doc.document_type}</td>
+                          <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{doc.expiry_date}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'history' && (
             <div className="space-y-6">
               {profile.history.length === 0 ? (
