@@ -61,28 +61,11 @@ function App() {
   const [financialPeriod, setFinancialPeriod] = useState('weekly');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Universal Search Handler
-  const handleGlobalSearch = (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    const lowerQuery = searchQuery.toLowerCase();
-    
-    // Check vehicles
-    const foundVehicle = vehicles.find(v => v.plate_number.toLowerCase().includes(lowerQuery) || v.make.toLowerCase().includes(lowerQuery));
-    if (foundVehicle) {
-      setSelectedVehicleId(foundVehicle.id);
-      setSearchQuery('');
-      return;
-    }
-    
-    // Check drivers
-    const foundDriver = drivers.find(d => d.name.toLowerCase().includes(lowerQuery) || d.license_number.toLowerCase().includes(lowerQuery));
-    if (foundDriver) {
-      setSelectedDriverId(foundDriver.id);
-      setSearchQuery('');
-      return;
-    }
-  };
+  const lowerQuery = searchQuery.toLowerCase().trim();
+  const searchResults = lowerQuery ? [
+    ...vehicles.filter(v => v.plate_number.toLowerCase().includes(lowerQuery) || v.make.toLowerCase().includes(lowerQuery)).map(v => ({ type: 'Vehicle', id: v.id, title: v.plate_number, subtitle: `${v.make} ${v.model}` })),
+    ...drivers.filter(d => d.name.toLowerCase().includes(lowerQuery) || d.license_number.toLowerCase().includes(lowerQuery)).map(d => ({ type: 'Driver', id: d.id, title: d.name, subtitle: d.license_number }))
+  ].slice(0, 8) : [];
 
   const handleExportCSV = (data, filename) => {
     if (!data || data.length === 0) return;
@@ -707,16 +690,46 @@ function App() {
         <header className="h-16 border-b border-slate-200 dark:border-slate-800/60 px-8 flex items-center justify-between shrink-0 bg-white/70 dark:bg-slate-900/30 backdrop-blur-md transition-colors duration-200">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white capitalize w-48">{activeTab}</h1>
           
-          <form onSubmit={handleGlobalSearch} className="flex-1 max-w-md mx-4 relative hidden md:block">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+          <div className="flex-1 max-w-md mx-4 relative hidden md:block">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 z-10" />
             <input 
               type="text" 
               placeholder="Search vehicles or drivers..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-full py-2 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 transition-all"
+              className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-full py-2 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 transition-all relative z-10"
             />
-          </form>
+            {searchQuery.trim() && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
+                {searchResults.length > 0 ? (
+                  <ul className="max-h-64 overflow-y-auto">
+                    {searchResults.map((res, idx) => (
+                      <li key={idx}>
+                        <button
+                          onClick={() => {
+                            if (res.type === 'Vehicle') setSelectedVehicleId(res.id);
+                            if (res.type === 'Driver') setSelectedDriverId(res.id);
+                            setSearchQuery('');
+                          }}
+                          className="w-full flex items-center p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-100 dark:border-slate-700/50 last:border-0"
+                        >
+                          <div className={`p-2 rounded-lg mr-3 ${res.type === 'Vehicle' ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400' : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400'}`}>
+                            {res.type === 'Vehicle' ? <Car className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{res.title}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{res.subtitle}</p>
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">No results found</div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center space-x-3">
             {/* Logout Button */}
