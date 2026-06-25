@@ -32,7 +32,9 @@ import {
   Moon,
   Coins,
   ShieldAlert,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Search,
+  Download
 } from 'lucide-react';
 import DriverProfileDrawer from './components/DriverProfileDrawer';
 import VehicleProfileDrawer from './components/VehicleProfileDrawer';
@@ -57,6 +59,44 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
   const [financialPeriod, setFinancialPeriod] = useState('weekly');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Universal Search Handler
+  const handleGlobalSearch = (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    const lowerQuery = searchQuery.toLowerCase();
+    
+    // Check vehicles
+    const foundVehicle = vehicles.find(v => v.plate_number.toLowerCase().includes(lowerQuery) || v.make.toLowerCase().includes(lowerQuery));
+    if (foundVehicle) {
+      setSelectedVehicleId(foundVehicle.id);
+      setSearchQuery('');
+      return;
+    }
+    
+    // Check drivers
+    const foundDriver = drivers.find(d => d.name.toLowerCase().includes(lowerQuery) || d.license_number.toLowerCase().includes(lowerQuery));
+    if (foundDriver) {
+      setSelectedDriverId(foundDriver.id);
+      setSearchQuery('');
+      return;
+    }
+  };
+
+  const handleExportCSV = (data, filename) => {
+    if (!data || data.length === 0) return;
+    const headers = Object.keys(data[0]).join(',');
+    const csvRows = data.map(row => Object.values(row).map(val => `"${val}"`).join(','));
+    const csvContent = [headers, ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     if (token) {
@@ -640,13 +680,13 @@ function App() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 ${
                     active 
-                      ? 'bg-indigo-600/10 text-indigo-600 dark:bg-indigo-600/20 dark:text-indigo-300 border-l-4 border-indigo-500 shadow-inner' 
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200'
+                      ? 'text-indigo-600 dark:text-indigo-400 font-bold bg-transparent' 
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-400'}`} />
+                  <Icon className={`w-5 h-5 transition-transform ${active ? 'text-indigo-600 dark:text-indigo-400 scale-110 drop-shadow-sm' : 'text-slate-400 dark:text-slate-400'}`} />
                   <span>{item.name}</span>
                 </button>
               );
@@ -665,8 +705,19 @@ function App() {
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col overflow-y-auto bg-slate-50/40 dark:bg-slate-950/40 relative">
         <header className="h-16 border-b border-slate-200 dark:border-slate-800/60 px-8 flex items-center justify-between shrink-0 bg-white/70 dark:bg-slate-900/30 backdrop-blur-md transition-colors duration-200">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white capitalize">{activeTab}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white capitalize w-48">{activeTab}</h1>
           
+          <form onSubmit={handleGlobalSearch} className="flex-1 max-w-md mx-4 relative hidden md:block">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search vehicles or drivers..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-full py-2 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 transition-all"
+            />
+          </form>
+
           <div className="flex items-center space-x-3">
             {/* Logout Button */}
             <button 
@@ -1128,20 +1179,29 @@ function App() {
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">TCO & Cost-per-KM Report</h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400">Cost breakdown and efficiency measurements per vehicle in the selected timeframe.</p>
                   </div>
-                  <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl border border-slate-300 dark:border-slate-700 w-fit">
-                    {['weekly', 'monthly', 'quarterly', 'yearly'].map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setFinancialPeriod(p)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all duration-200 ${
-                          financialPeriod === p
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    ))}
+                  <div className="flex items-center space-x-4">
+                    <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl border border-slate-300 dark:border-slate-700 w-fit">
+                      {['weekly', 'monthly', 'quarterly', 'yearly'].map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => setFinancialPeriod(p)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all duration-200 ${
+                            financialPeriod === p
+                              ? 'bg-indigo-600 text-white shadow-sm'
+                              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleExportCSV(financialReport.vehicles, 'financial_report.csv')}
+                      className="bg-indigo-600/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600/20 dark:hover:bg-indigo-500/30 px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-1"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Export CSV</span>
+                    </button>
                   </div>
                 </div>
 
